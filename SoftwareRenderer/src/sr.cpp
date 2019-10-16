@@ -2,6 +2,7 @@
 #include <cassert>
 #include "parseOBJ.h"
 #include "Color.h"
+#include "SDL.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
@@ -38,16 +39,11 @@ public:
 };
 
 void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
-	//NDC to viewport transform
-	//int x1 = (vertex1.x + 1) * pixelBuffer.width * 0.5;
-	//int y1 = (-vertex1.y + 1) * pixelBuffer.height * 0.5;
-	//int x2 = (vertex2.x + 1) * pixelBuffer.width  * 0.5;
-	//int y2 = (-vertex2.y + 1) * pixelBuffer.height * 0.5;
-
-	int x1 = vertex1.x;
-	int y1 = vertex1.y;
-	int x2 = vertex2.x;
-	int y2 = vertex2.y;
+	// NDC to viewport
+	int x1 = ((vertex1.x + 3.0f) / 4) * pixelBuffer.width  * 0.5f;
+	int y1 = ((vertex1.y + 3.0f) / 4) * pixelBuffer.height * 0.5f;
+	int x2 = ((vertex2.x + 3.0f) / 4) * pixelBuffer.width  * 0.5f;
+	int y2 = ((vertex2.y + 3.0f) / 4) * pixelBuffer.height * 0.5f;
 
 	//transpose line if it is too steep
 	bool steep = false;
@@ -85,10 +81,16 @@ void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
 	}
 }
 
-int main() {
+int main(int argc, char **argv) {
+	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) == -1)) {
+		printf("Could not initialize SDL: %s.\n", SDL_GetError());
+		exit(-1);
+	}
 	
+	SDL_Window *window = SDL_CreateWindow("Software Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 1600, 0); 
+
 	// Parse obj
-	parseOBJ(model, ".\\models\\deer.obj");
+	parseOBJ(model, ".\\models\\teapot.obj");
 
 	Image image(imageWidth, imageHeight);
 
@@ -98,8 +100,7 @@ int main() {
 		}
 	}
 
-
-	for (int i = 0; i < model.facesNumber; i++) {
+	for (int i = 0; i < model.facesNumber(); i++) {
 		Vec3f triVert[3];
 		for (int j = 0; j < 3; j++) {
 			triVert[j] = model.triVert(i, j);
@@ -109,5 +110,11 @@ int main() {
 		drawLine(triVert[2], triVert[0], red, image);
 	}
 
+
+
 	stbi_write_png("output.png", imageWidth, imageHeight, image.bytepp, image.data, imageWidth * image.bytepp);
+
+	SDL_Quit();
+
+	return 0;
 }

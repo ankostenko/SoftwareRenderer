@@ -43,13 +43,8 @@ void parseOBJ(Model &model, const char *pathname) {
 			model.vertices.push_back(temp);
 		} else if (key == "f") {
 			iss >> x >> y >> z;
-			std::vector<Vec3f> f;
-
-			f.push_back(splitVertAndUv(x));
-			f.push_back(splitVertAndUv(y));
-			f.push_back(splitVertAndUv(z));
-			
-			model.faces.push_back(f);
+			Vec3f temp = { std::stoi(x) - 1, std::stoi(y) - 1, std::stoi(z) - 1 };
+			model.faces.push_back(temp);
 		}
 	}
  
