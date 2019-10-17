@@ -7,7 +7,6 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
 
-
 Model model;
 
 Color black(0, 0, 0);
@@ -35,6 +34,20 @@ public:
 	void set(int x, int y, Color color) {
 		assert(x >= 0 && y >= 0 && x < width && y < height);
 		memmove(&data[(x + y * width) * bytepp], color.rgba, bytepp);
+	}
+
+	size_t size() {
+		return width * height * bytepp;
+	}
+
+	void flip_vertically() {
+		void *temp = new unsigned char[width * bytepp];
+		for (int y = 0; y < height / 2; y++) {
+			memcpy(temp, &data[y * width * bytepp], width * bytepp);
+			memcpy(&data[y * width * bytepp], &data[(height - 1 - y) * width * bytepp], width * bytepp);
+			memcpy(&data[(height - 1 - y) * width * bytepp], temp, width * bytepp);
+		}
+		delete temp;
 	}
 };
 
@@ -87,7 +100,17 @@ int main(int argc, char **argv) {
 		exit(-1);
 	}
 	
-	SDL_Window *window = SDL_CreateWindow("Software Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1600, 1600, 0); 
+	SDL_Window *window = SDL_CreateWindow("Software Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, imageWidth, imageHeight, 0); 
+	if (!window) {
+		printf("Couldn't create a window\n %s", SDL_GetError());
+		return 0;
+	}
+
+	SDL_Surface *surface = SDL_GetWindowSurface(window);
+	if (!surface) {
+		printf("Couldn't create a window surface %s", SDL_GetError());
+		return 0;
+	}
 
 	// Parse obj
 	parseOBJ(model, ".\\models\\teapot.obj");
@@ -110,11 +133,17 @@ int main(int argc, char **argv) {
 		drawLine(triVert[2], triVert[0], red, image);
 	}
 
+	SDL_LockSurface(surface);
+	memmove(surface->pixels, image.data, image.size());
+	SDL_UnlockSurface(surface);
 
+	SDL_UpdateWindowSurface(window);
 
+	image.flip_vertically();
 	stbi_write_png("output.png", imageWidth, imageHeight, image.bytepp, image.data, imageWidth * image.bytepp);
+	
+	system("pause");
 
 	SDL_Quit();
-
 	return 0;
 }
