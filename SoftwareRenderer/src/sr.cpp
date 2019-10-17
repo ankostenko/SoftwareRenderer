@@ -32,7 +32,10 @@ public:
 	}
 
 	void set(int x, int y, Color color) {
-		assert(x >= 0 && y >= 0 && x < width && y < height);
+		if (x < 0 || y < 0 || x >= width | y >= height) {
+			return;
+		}
+
 		memmove(&data[(x + y * width) * bytepp], color.rgba, bytepp);
 	}
 
@@ -52,11 +55,19 @@ public:
 };
 
 void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
+	// To NDC
+	// constant is expressing how far from camera Z-plane is located
+	const int HOW_FAR_Z_PLANE = 4;
+	float x1 =  vertex1.x / HOW_FAR_Z_PLANE;
+	float y1 = -vertex1.y / HOW_FAR_Z_PLANE;
+	float x2 =  vertex2.x / HOW_FAR_Z_PLANE;
+	float y2 = -vertex2.y / HOW_FAR_Z_PLANE;
+
 	// NDC to viewport
-	int x1 = ((vertex1.x + 3.0f) / 4) * pixelBuffer.width  * 0.5f;
-	int y1 = ((vertex1.y + 3.0f) / 4) * pixelBuffer.height * 0.5f;
-	int x2 = ((vertex2.x + 3.0f) / 4) * pixelBuffer.width  * 0.5f;
-	int y2 = ((vertex2.y + 3.0f) / 4) * pixelBuffer.height * 0.5f;
+	x1 = (x1 + 1.0f) / 2 * pixelBuffer.width;
+	x2 = (x2 + 1.0f) / 2 * pixelBuffer.width;
+	y1 = (y1 + 1.0f) / 2 * pixelBuffer.height + pixelBuffer.height / 4;
+	y2 = (y2 + 1.0f) / 2 * pixelBuffer.height + pixelBuffer.height / 4;
 
 	//transpose line if it is too steep
 	bool steep = false;
@@ -95,6 +106,7 @@ void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
 }
 
 int main(int argc, char **argv) {
+#if 0
 	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) == -1)) {
 		printf("Could not initialize SDL: %s.\n", SDL_GetError());
 		exit(-1);
@@ -111,8 +123,8 @@ int main(int argc, char **argv) {
 		printf("Couldn't create a window surface %s", SDL_GetError());
 		return 0;
 	}
+#endif
 
-	// Parse obj
 	parseOBJ(model, ".\\models\\teapot.obj");
 
 	Image image(imageWidth, imageHeight);
@@ -133,17 +145,19 @@ int main(int argc, char **argv) {
 		drawLine(triVert[2], triVert[0], red, image);
 	}
 
+#if 0
 	SDL_LockSurface(surface);
 	memmove(surface->pixels, image.data, image.size());
 	SDL_UnlockSurface(surface);
 
 	SDL_UpdateWindowSurface(window);
+#endif
 
-	image.flip_vertically();
+	// image.flip_vertically();
 	stbi_write_png("output.png", imageWidth, imageHeight, image.bytepp, image.data, imageWidth * image.bytepp);
 	
-	system("pause");
+	//system("pause");
 
-	SDL_Quit();
+	//SDL_Quit();
 	return 0;
 }
