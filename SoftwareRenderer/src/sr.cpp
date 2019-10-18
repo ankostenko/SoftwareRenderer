@@ -32,7 +32,7 @@ public:
 	}
 
 	void set(int x, int y, Color color) {
-		if (x < 0 || y < 0 || x >= width | y >= height) {
+		if (x < 0 || y < 0 || x >= width || y >= height) {
 			return;
 		}
 
@@ -58,10 +58,11 @@ void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
 	// To NDC
 	// constant is expressing how far from camera Z-plane is located
 	const int HOW_FAR_Z_PLANE = 4;
-	float x1 =  vertex1.x / HOW_FAR_Z_PLANE;
-	float y1 = -vertex1.y / HOW_FAR_Z_PLANE;
-	float x2 =  vertex2.x / HOW_FAR_Z_PLANE;
-	float y2 = -vertex2.y / HOW_FAR_Z_PLANE;
+	//	2.0 and 4.0 are a normalization constants
+	float x1 =  vertex1.x / ((vertex1.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
+	float y1 = -vertex1.y / ((vertex1.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
+	float x2 =  vertex2.x / ((vertex2.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
+	float y2 = -vertex2.y / ((vertex2.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
 
 	// NDC to viewport
 	x1 = (x1 + 1.0f) / 2 * pixelBuffer.width;
