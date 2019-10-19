@@ -160,16 +160,15 @@ int main(int argc, char **argv) {
 
 			ProcessInput(window, angleTheta, anglePhi);
 
-			angleTheta += M_PI / (20 * M_PI);
+			// anglePhi += M_PI / (20 * M_PI);
 
-			//Mat4f transform = rotationX(anglePhi);
-			Mat4f transform = rotationY(angleTheta);
+			//Mat4f transform = rotationX(M_PI / 4);
 
 			for (int i = 0; i < model.facesNumber(); i++) {
 				Vec3f triVert[3];
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
-					triVert[j] = triVert[j] * transform;
+					triVert[j] = triVert[j] * rotationX(anglePhi) * rotationY(angleTheta);
 				}
 
 				drawLine(triVert[0], triVert[1], red, image);
