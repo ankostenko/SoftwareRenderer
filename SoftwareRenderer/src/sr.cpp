@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 	Image image(imageWidth, imageHeight);
 
 	for (int y = 0; y < imageHeight; y++) {
-		for (int x = 0; x < imageWidth; x++) {
+		for (int x = 0; x < imageWidth; x++) {	
 			image.set(x, y, black);
 		}
 	}

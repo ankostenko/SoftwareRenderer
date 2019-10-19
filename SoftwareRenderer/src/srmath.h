@@ -95,10 +95,10 @@ Mat4f translate(float values[4]) {
 Mat4f rotationY(float angle) {
 	Mat4f mat = identity();
 
-	float values0[4] = { cos(angle),  0, sin(angle), 0 };
-	float values1[4] = { 0,			  1,	0,		 0 };
-	float values2[4] = { -sin(angle), 0, cos(angle), 0 };
-	float values3[4] = { 0,			  0, 0,			 1 };
+	float values0[4] = {  cos(angle),	0,	sin(angle),	0 };
+	float values1[4] = {		   0,	1,			 0,	0 };
+	float values2[4] = { -sin(angle),	0,	cos(angle), 0 };
+	float values3[4] = {		   0,	0,			 0,	1 };
 
 	mat.setRow(0, values0);
 	mat.setRow(1, values1);
@@ -111,10 +111,10 @@ Mat4f rotationY(float angle) {
 Mat4f rotationX(float angle) {
 	Mat4f mat = identity();
 
-	float values0[4] = { 1,				 0,				  0,	0 };
-	float values1[4] = { 0,		cos(angle),		-sin(angle),	0 };
-	float values2[4] = { 0,		sin(angle),		 cos(angle),	0 };
-	float values3[4] = { 0,				 0,				  0,	1 };
+	float values0[4] = { 1,			 0,			  0,	0 };
+	float values1[4] = { 0,	cos(angle),	-sin(angle),	0 };
+	float values2[4] = { 0,	sin(angle),	 cos(angle),	0 };
+	float values3[4] = { 0,			 0,			  0,	1 };
 
 	mat.setRow(0, values0);
 	mat.setRow(1, values1);
