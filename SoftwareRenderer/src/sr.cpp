@@ -1,11 +1,14 @@
 #include <vector>
 #include <cassert>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include "parseOBJ.h"
 #include "Color.h"
-#include "SDL.h"
-
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
+
+#include "winlayer.h"
+#include "Timer.cpp"
 
 Model model;
 
@@ -13,8 +16,8 @@ Color black(0, 0, 0);
 Color white(255, 255, 255);
 Color red(255, 0, 0);
 
-const int imageHeight = 1600;
-const int imageWidth = 1600;
+const int imageHeight = 800;
+const int imageWidth =  800;
 
 struct Image {
 private:
@@ -112,8 +115,8 @@ int main(int argc, char **argv) {
 		printf("Could not initialize SDL: %s.\n", SDL_GetError());
 		exit(-1);
 	}
-	
-	SDL_Window *window = SDL_CreateWindow("Software Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, imageWidth, imageHeight, 0); 
+
+	SDL_Window *window = SDL_CreateWindow("Software Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, imageWidth, imageHeight, 0);
 	if (!window) {
 		printf("Couldn't create a window\n %s", SDL_GetError());
 		return 0;
@@ -126,6 +129,11 @@ int main(int argc, char **argv) {
 	}
 #endif
 
+	float values[4] = { 0.0f, 1.5f, 0.0f, 1.0f, };
+
+	Mat4f scaleMatrix = scale(1.75f);
+	Mat4f translationMatrix = translate(values);
+
 	parseOBJ(model, ".\\models\\teapot.obj");
 
 	Image image(imageWidth, imageHeight);
@@ -136,14 +144,49 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	for (int i = 0; i < model.facesNumber(); i++) {
-		Vec3f triVert[3];
-		for (int j = 0; j < 3; j++) {
-			triVert[j] = model.triVert(i, j);
+	HWND window = Win32Init(imageWidth, imageHeight);
+	HDC hdc = GetDC(window);
+
+	float angleTheta = 0;
+	float anglePhi = 0;
+
+	Timer fpsLock;
+
+	while (1) {
+		if (fpsLock.milliElapsed() > 16.0f) {
+			fpsLock.ResetStartTime();
+
+			memset(image.data, 0, image.size());
+
+			ProcessInput(window, angleTheta, anglePhi);
+
+			angleTheta += M_PI / (20 * M_PI);
+
+			//Mat4f transform = rotationX(anglePhi);
+			Mat4f transform = rotationY(angleTheta);
+
+			for (int i = 0; i < model.facesNumber(); i++) {
+				Vec3f triVert[3];
+				for (int j = 0; j < 3; j++) {
+					triVert[j] = model.triVert(i, j);
+					triVert[j] = triVert[j] * transform;
+				}
+
+				drawLine(triVert[0], triVert[1], red, image);
+				drawLine(triVert[1], triVert[2], red, image);
+				drawLine(triVert[2], triVert[0], red, image);
+			}
+
+			image.flip_vertically();
+			buffer_memory = image.data;
+			StretchDIBits(hdc, 0, 0, imageWidth, imageHeight, 0, 0, imageWidth, imageHeight, buffer_memory, &buffer_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
+
+			char buffer[64];
+
+			wsprintf(buffer, "%d ms\n", (int)fpsLock.milliElapsed());
+			OutputDebugStringA(buffer);
+
 		}
-		drawLine(triVert[0], triVert[1], red, image);
-		drawLine(triVert[1], triVert[2], red, image);
-		drawLine(triVert[2], triVert[0], red, image);
 	}
 
 #if 0
