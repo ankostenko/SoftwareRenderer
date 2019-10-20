@@ -66,6 +66,14 @@ struct Vec3f {
 
 		return vec;
 	}
+
+	Vec3f operator+(Vec3f b) {
+		return { x + b.x, y + b.y, z + b.z };
+	}
+
+	Vec3f operator-(Vec3f b) {
+		return { x - b.x, y - b.y, z - b.z };
+	}
 };
 
 Mat4f identity() {
@@ -122,4 +130,45 @@ Mat4f rotationX(float angle) {
 	mat.setRow(3, values3);
 
 	return mat;
+}
+
+Mat4f rotationXY(float angleTheta, float anglePhi) {
+	Mat4f mat = identity();
+
+	float values0[4] = { cos(angleTheta),	sin(angleTheta) * sin(anglePhi),	sin(angleTheta) * cos(anglePhi),	0 };
+	float values1[4] = {			   0,					  cos(anglePhi),					 -sin(anglePhi),	0 };
+	float values2[4] = { -sin(angleTheta),	cos(angleTheta) * sin(anglePhi),	cos(angleTheta) * cos(anglePhi),	0 };
+	float values3[4] = {			   0,								  0,								  0,	1 };
+
+	mat.setRow(0, values0);
+	mat.setRow(1, values1);
+	mat.setRow(2, values2);
+	mat.setRow(3, values3);
+
+	return mat;
+}
+
+Vec3f cross(Vec3f v0, Vec3f v1) {
+	return { v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x };
+}
+
+
+Mat4f lookAt(Vec3f from, Vec3f to) {
+	Vec3f forward = from - to;
+	Vec3f right = cross({ 0.0f, 1.0f, 0.0f }, forward);
+	Vec3f up = cross(forward, right);
+
+	Mat4f ret = { };
+
+	float values0[4] = {   right.x,	  right.y,	 right.z, 0.0f };
+	float values1[4] = {	  up.x,		 up.y,	    up.z, 0.0f };
+	float values2[4] = { forward.x, forward.y, forward.z, 0.0f };
+	float values3[4] = {	from.x,	   from.y,	  from.z, 1.0f };
+
+	ret.setRow(0, values0);
+	ret.setRow(1, values1);
+	ret.setRow(2, values2);
+	ret.setRow(3, values3);
+
+	return ret;
 }
