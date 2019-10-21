@@ -24,7 +24,7 @@ const int imageWidth = 800;
 
 // Camera features 
 
-Vec3f camera = { -1.0f, 1.0f, -3.0f };
+Vec3f camera = { 1.0f, 1.0f, 2.0f };
 float focalLength = 35;
 float filmApertureWidth = 0.980;
 float filmApertureHeight = 0.735;
@@ -73,7 +73,7 @@ public:
 void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
 	// To NDC
 	// constant is expressing how far from camera Z-plane is located
-	const int HOW_FAR_Z_PLANE = 5;
+	const int HOW_FAR_Z_PLANE = 2;
 	//	2.0 and 4.0 are a normalization constants
 	float x1 = vertex1.x / ((vertex1.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
 	float y1 = -vertex1.y / ((vertex1.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
@@ -122,8 +122,8 @@ void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
 	}
 }
 
-bool computePixelCoordinates(Mat4f &c2w, float b, float l, float r, float t, int imageWidth, int imageHeight) {
-	Vec3f pCamera = camera * c2w;
+bool computePixelCoordinates(Mat4f &w2c, Vec3f &pRaster, float b, float l, float r, float t, int imageWidth, int imageHeight) {
+	Vec3f pCamera = camera * w2c;
 
 	Vec3f pScreen;
 	pScreen.x = pCamera.x / pCamera.z * nearClippingPlane;
@@ -133,9 +133,8 @@ bool computePixelCoordinates(Mat4f &c2w, float b, float l, float r, float t, int
 	pNDC.x = (pScreen.x + r) / (2 * r);
 	pNDC.y = (pScreen.y + t) / (2 * t);
 
-	Vec3f pRaster;
 	pRaster.x = (int)(pNDC.x * imageWidth);
-	pRaster.y = (int)(pNDC.y * imageHeight);
+	pRaster.y = (int)((1 - pNDC.y) * imageHeight);
 
 	if (pScreen.x < l || pScreen.x > r || pScreen.y < b || pScreen.y > t) {
 		return false;
@@ -160,6 +159,8 @@ int main(int argc, char **argv) {
 
 	float angleTheta = 0;
 	float anglePhi = 0;
+	float cameraAngleTheta = 0;
+	float cameraAnglePhi = 0;
 
 	Timer fpsLock;
 
@@ -169,21 +170,17 @@ int main(int argc, char **argv) {
 	float top = ((filmApertureHeight * inch2mm / 2) / focalLength) * nearClippingPlane;
 	float bottom = -top;
 
-	Mat4f cameraTransform = identity();
-	computePixelCoordinates(cameraTransform, bottom, left, right, top, image.width, imageHeight);
-		 
 	while (1) {
 		if (fpsLock.milliElapsed() > 16.0f) {
 			fpsLock.ResetStartTime();
 
 			memset(image.data, 0, image.size());
 
-			ProcessInput(window, angleTheta, anglePhi);
+			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi);
 
 			// anglePhi += M_PI / (20 * M_PI);
 
 			//Mat4f transform = rotationX(M_PI / 4);
-
 
 			// World coordinate system
 			Vec3f x = { 3.0f, 0.0f, 0.0f };
@@ -191,7 +188,9 @@ int main(int argc, char **argv) {
 			Vec3f z = { 0.0f, 0.0f, 3.0f };
 			Vec3f origin = { 0.0f, 0.0f, 0.0f };
 			// Camera
-			Mat4f view = lookAt(camera, origin);
+			Vec3f tCamera = camera * rotationXY(cameraAngleTheta, cameraAnglePhi);
+			Mat4f view = lookAt(tCamera, origin);
+			view = inverse(view);
 
 			x = x * view;
 			y = y * view;
@@ -203,23 +202,28 @@ int main(int argc, char **argv) {
 			// ===================================
 
 			// DEBUG: ARROW POINTING TO UP
-			Vec3f localUp = { 0.0f, 5.0f, 0.0f };
-			Vec3f arrow[] = { { 0.1f, 4.9f, 0.1f }, { -0.1f, 4.9f, 0.1f }, { 0.0f, 4.9f, -0.1f } };
-			arrow[0] = arrow[0] * rotationXY(angleTheta, anglePhi);
-			arrow[1] = arrow[1] * rotationXY(angleTheta, anglePhi);
-			arrow[2] = arrow[2] * rotationXY(angleTheta, anglePhi);
-			localUp = localUp * rotationXY(angleTheta, anglePhi);
-			drawLine(origin, localUp, magenta, image);
-			drawLine(arrow[0], localUp, magenta, image);
-			drawLine(arrow[1], localUp, magenta, image);
-			drawLine(arrow[2], localUp, magenta, image);
+			//Vec3f localUp = { 0.0f, 5.0f, 0.0f };
+			//Vec3f arrow[] = { { 0.1f, 4.9f, 0.1f }, { -0.1f, 4.9f, 0.1f }, { 0.0f, 4.9f, -0.1f } };
+			//arrow[0] = arrow[0] * rotationXY(angleTheta, anglePhi);
+			//arrow[1] = arrow[1] * rotationXY(angleTheta, anglePhi);
+			//arrow[2] = arrow[2] * rotationXY(angleTheta, anglePhi);
+			//localUp = localUp * rotationXY(angleTheta, anglePhi);
+			////computePixelCoordinates(view, arrow[0], bottom, left, right, top, image.width, image.height);
+			////computePixelCoordinates(view, arrow[1], bottom, left, right, top, image.width, image.height);
+			////computePixelCoordinates(view, arrow[2], bottom, left, right, top, image.width, image.height);
+			////computePixelCoordinates(view, localUp, bottom, left, right, top, image.width, image.height);
+			//drawLine(origin, localUp, magenta, image);
+			//drawLine(arrow[0], localUp, magenta, image);
+			//drawLine(arrow[1], localUp, magenta, image);
+			//drawLine(arrow[2], localUp, magenta, image);
 			// ======================
 
 			for (int i = 0; i < model.facesNumber(); i++) {
 				Vec3f triVert[3];
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
-					triVert[j] = triVert[j] * rotationXY(angleTheta, anglePhi) * view;
+					triVert[j] = triVert[j] * rotationXY(angleTheta, anglePhi);
+					triVert[j] = triVert[j] * view;
 					//triVert[j] = triVert[j] * rotationX(anglePhi) * rotationY(angleTheta); // It is probably a model rotation
 					//triVert[j] = triVert[j] * rotationY(angleTheta) * rotationX(anglePhi); // It is probably a model rotation
 				}
