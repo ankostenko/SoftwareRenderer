@@ -172,3 +172,85 @@ Mat4f lookAt(Vec3f from, Vec3f to) {
 
 	return ret;
 }
+
+// This is pretty bad I probably shouldn't compute that thing
+// It ruins performance completely
+int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
+	int i, j, k, imax;
+	float maxA, absA;
+
+	for (i = 0; i <= N; i++)
+		P[i] = i; //Unit permutation matrix, P[N] initialized with N
+
+	for (i = 0; i < N; i++) {
+		maxA = 0.0;
+		imax = i;
+
+		for (k = i; k < N; k++)
+			if ((absA = fabs(A[k][i])) > maxA) {
+				maxA = absA;
+				imax = k;
+			}
+
+		if (maxA < Tol) return 0; //failure, matrix is degenerate
+
+		if (imax != i) {
+			//pivoting P
+			j = P[i];
+			P[i] = P[imax];
+			P[imax] = j;
+
+			//pivoting rows of A
+			for (int l = 0; l < 4; l++) {
+				float temp[4];
+				temp[l] = A[i][l];
+				A[i][l] = A[imax][l];
+				A[imax][l] = temp[l];
+			}
+
+			//counting pivots starting from N (for determinant)
+			P[N]++;
+		}
+
+		for (j = i + 1; j < N; j++) {
+			A[j][i] /= A[i][i];
+
+			for (k = i + 1; k < N; k++)
+				A[j][k] -= A[j][i] * A[i][k];
+		}
+	}
+
+	return 1;  //decomposition done 
+}
+
+void LUPInvert(float A[4][4], int *P, int N, float IA[4][4]) {
+	for (int j = 0; j < N; j++) {
+		for (int i = 0; i < N; i++) {
+			if (P[i] == j)
+				IA[i][j] = 1.0;
+			else
+				IA[i][j] = 0.0;
+
+			for (int k = 0; k < i; k++)
+				IA[i][j] -= A[i][k] * IA[k][j];
+		}
+
+		for (int i = N - 1; i >= 0; i--) {
+			for (int k = i + 1; k < N; k++)
+				IA[i][j] -= A[i][k] * IA[k][j];
+
+			IA[i][j] = IA[i][j] / A[i][i];
+		}
+	}
+}
+
+
+Mat4f inverse(Mat4f &mat) {
+	Mat4f inverted = { };
+	int P[32];
+
+	LUPDecompose(mat.mat, 4, 1e-5, P);
+	LUPInvert(mat.mat, P, 4, inverted.mat);
+
+	return inverted;
+}
