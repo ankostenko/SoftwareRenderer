@@ -67,12 +67,22 @@ struct Vec3f {
 		return vec;
 	}
 
+	float operator*(Vec3f vec) {
+		return { vec.x * x + vec.y * y + vec.z * z };
+	}
+
 	Vec3f operator+(Vec3f b) {
 		return { x + b.x, y + b.y, z + b.z };
 	}
 
 	Vec3f operator-(Vec3f b) {
 		return { x - b.x, y - b.y, z - b.z };
+	}
+
+	void normalize() {
+		x = x / (sqrt(x * x + y * y + z * z));
+		y = y / (sqrt(x * x + y * y + z * z));
+		z = z / (sqrt(x * x + y * y + z * z));
 	}
 };
 
@@ -152,10 +162,14 @@ Vec3f cross(Vec3f v0, Vec3f v1) {
 	return { v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x };
 }
 
+Vec3f norm(Vec3f vec) {
+	float length = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+	return { vec.x / length, vec.y / length, vec.z / length };
+}
 
 Mat4f lookAt(Vec3f from, Vec3f to) {
-	Vec3f forward = from - to;
-	Vec3f right = cross({ 0.0f, 1.0f, 0.0f }, forward);
+	Vec3f forward = norm(from - to);
+	Vec3f right = norm(cross({ 0.0f, 1.0f, 0.0f }, forward));
 	Vec3f up = cross(forward, right);
 
 	Mat4f ret = { };

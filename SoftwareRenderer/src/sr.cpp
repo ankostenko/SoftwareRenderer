@@ -24,7 +24,7 @@ const int imageWidth = 800;
 
 // Camera features 
 
-Vec3f camera = { 1.0f, 1.0f, 2.0f };
+Vec3f camera = { 0.0f, 0.0f, 3.0f };
 float focalLength = 35;
 float filmApertureWidth = 0.980;
 float filmApertureHeight = 0.735;
@@ -70,29 +70,40 @@ public:
 	}
 };
 
-void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
-	// To NDC
-	// constant is expressing how far from camera Z-plane is located
-	const int HOW_FAR_Z_PLANE = 2;
-	//	2.0 and 4.0 are a normalization constants
-	float x1 = vertex1.x / ((vertex1.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
-	float y1 = -vertex1.y / ((vertex1.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
-	float x2 = vertex2.x / ((vertex2.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
-	float y2 = -vertex2.y / ((vertex2.z + 2.0f) / 4 + HOW_FAR_Z_PLANE);
+bool computePixelCoordinates(Mat4f view, Vec3f pWorld, float b, float l, float r, float t, int imageWidth, int imageHeight, Vec3f &pRaster) {
+	Vec3f pCamera = pWorld * view;
+	
+	Vec3f pScreen;
+	if (pCamera.z < 1e-5) return false;
+	pScreen.x = pCamera.x / -pCamera.z * nearClippingPlane;
+	pScreen.y = pCamera.y / -pCamera.z * nearClippingPlane;
 
-	// NDC to viewport
-	x1 = (x1 + 1.0f) / 2 * pixelBuffer.width;
-	x2 = (x2 + 1.0f) / 2 * pixelBuffer.width;
-	y1 = (y1 + 1.0f) / 2 * pixelBuffer.height + pixelBuffer.height / 4;
-	y2 = (y2 + 1.0f) / 2 * pixelBuffer.height + pixelBuffer.height / 4;
+	Vec3f pNDC;
+	pNDC.x = (pScreen.x + r) / (2 * r);
+	pNDC.y = (pScreen.y + t) / (2 * t);
 
+	pRaster.x = (int)(pNDC.x * imageWidth);
+	pRaster.y = (int)((1 - pNDC.y) * imageHeight);
+
+	if (pScreen.x < l || pScreen.x > r || pScreen.y < b || pScreen.y > t) {
+		return false;
+	}
+	return true;
+}
+
+void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
+	float x1 = p1.x;
+	float y1 = p1.y;
+	float x2 = p2.x;
+	float y2 = p2.y;
+	
 	//transpose line if it is too steep
 	bool steep = false;
 	if (std::abs(x1 - x2) < std::abs(y1 - y2)) {
 		std::swap(x1, y1);
 		std::swap(x2, y2);
 		steep = true;
-	}	
+	}
 
 	//Redefine line so that it is left to right
 	if (x1 > x2) {
@@ -109,10 +120,10 @@ void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
 
 	for (int x = x1; x <= x2; x++) {
 		if (steep) {
-			pixelBuffer.set(y, x, color); //Swap back because of steep transpose
+			buffer.set(y, x, color); //Swap back because of steep transpose
 		}
 		else {
-			pixelBuffer.set(x, y, color);
+			buffer.set(x, y, color);
 		}
 		error2 += derror2;
 		if (error2 > dx) {
@@ -122,28 +133,31 @@ void drawLine(Vec3f vertex1, Vec3f vertex2, Color &color, Image &pixelBuffer) {
 	}
 }
 
-bool computePixelCoordinates(Mat4f &w2c, Vec3f &pRaster, float b, float l, float r, float t, int imageWidth, int imageHeight) {
-	Vec3f pCamera = camera * w2c;
-
+bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidth, int imageHeight, Vec3f &coords) {
+	Vec3f pCamera = pWorld * view;
+	
 	Vec3f pScreen;
-	pScreen.x = pCamera.x / pCamera.z * nearClippingPlane;
-	pScreen.y = pCamera.y / pCamera.z * nearClippingPlane;
+	pScreen.x = pCamera.x / -pCamera.z * nearClippingPlane;
+	pScreen.y = pCamera.y / -pCamera.z * nearClippingPlane;
+	
+	float left = -right;
+	float bottom = -top;
 
-	Vec3f pNDC;
-	pNDC.x = (pScreen.x + r) / (2 * r);
-	pNDC.y = (pScreen.y + t) / (2 * t);
+	//if (pScreen.x > right || pScreen.x < left || pScreen.y > top || pScreen.y < bottom) {
+	//	return false;
+	//}
+	
+	Vec3f ndc;
+	ndc.x = (pScreen.x + right) / (2 * right);
+	ndc.y = (pScreen.y + top)   / (2 * top  );
 
-	pRaster.x = (int)(pNDC.x * imageWidth);
-	pRaster.y = (int)((1 - pNDC.y) * imageHeight);
+	coords.x = (int)(ndc.x * imageWidth);
+	coords.y = (int)((1.0f - ndc.y) * imageHeight);
 
-	if (pScreen.x < l || pScreen.x > r || pScreen.y < b || pScreen.y > t) {
-		return false;
-	}
 	return true;
 }
 
 int main(int argc, char **argv) {
-	Mat4f scaleMatrix = scale(3.75f);
 	parseOBJ(model, ".\\models\\teapot.obj");
 
 	Image image(imageWidth, imageHeight);
@@ -164,11 +178,32 @@ int main(int argc, char **argv) {
 
 	Timer fpsLock;
 
-	float right = ((filmApertureWidth * inch2mm / 2) / focalLength) * nearClippingPlane;
-	float left = -right;
+	float filmAspectRatio = filmApertureWidth / filmApertureHeight;
+	float deviceAspectRatio = imageWidth / (float)imageHeight;
 
 	float top = ((filmApertureHeight * inch2mm / 2) / focalLength) * nearClippingPlane;
+	float right = ((filmApertureWidth * inch2mm / 2) / focalLength) * nearClippingPlane;
+
+	float xscale = 1;
+	float yscale = 1;
+
+	if (filmAspectRatio > deviceAspectRatio) {
+		xscale = deviceAspectRatio / filmAspectRatio;
+	} else {
+		yscale = filmAspectRatio / deviceAspectRatio;
+	}
+
+	right *= xscale;
+	top *= yscale;
+
+	float left = -right;
 	float bottom = -top;
+
+	// World coordinate system
+	Vec3f X = { 1.0f, 0.0f, 0.0f };
+	Vec3f Y = { 0.0f, 1.0f, 0.0f };
+	Vec3f Z = { 0.0f, 0.0f, 1.0f };
+	Vec3f origin = { 0.0f, 0.0f, 0.0f };
 
 	while (1) {
 		if (fpsLock.milliElapsed() > 16.0f) {
@@ -177,60 +212,38 @@ int main(int argc, char **argv) {
 			memset(image.data, 0, image.size());
 
 			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi);
-
-			// anglePhi += M_PI / (20 * M_PI);
-
-			//Mat4f transform = rotationX(M_PI / 4);
-
-			// World coordinate system
-			Vec3f x = { 3.0f, 0.0f, 0.0f };
-			Vec3f y = { 0.0f, 3.0f, 0.0f };
-			Vec3f z = { 0.0f, 0.0f, 3.0f };
-			Vec3f origin = { 0.0f, 0.0f, 0.0f };
+			
 			// Camera
 			Vec3f tCamera = camera * rotationXY(cameraAngleTheta, cameraAnglePhi);
 			Mat4f view = lookAt(tCamera, origin);
 			view = inverse(view);
 
-			x = x * view;
-			y = y * view;
-			z = z * view;
+			Vec3f rX;
+			Vec3f rY;
+			Vec3f rZ;
+			Vec3f rOrigin;
 
-			drawLine(origin, x, red, image);
-			drawLine(origin, y, green, image);
-			drawLine(origin, z, blue, image);
-			// ===================================
+			if (!pixelCoord(view, X, right, top, imageWidth, imageHeight, rX)) continue;
+			if (!pixelCoord(view, Y, right, top, imageWidth, imageHeight, rY)) continue;
+			if (!pixelCoord(view, Z, right, top, imageWidth, imageHeight, rZ)) continue;
+			if (!pixelCoord(view, origin, right, top, imageWidth, imageHeight, rOrigin)) continue;
 
-			// DEBUG: ARROW POINTING TO UP
-			//Vec3f localUp = { 0.0f, 5.0f, 0.0f };
-			//Vec3f arrow[] = { { 0.1f, 4.9f, 0.1f }, { -0.1f, 4.9f, 0.1f }, { 0.0f, 4.9f, -0.1f } };
-			//arrow[0] = arrow[0] * rotationXY(angleTheta, anglePhi);
-			//arrow[1] = arrow[1] * rotationXY(angleTheta, anglePhi);
-			//arrow[2] = arrow[2] * rotationXY(angleTheta, anglePhi);
-			//localUp = localUp * rotationXY(angleTheta, anglePhi);
-			////computePixelCoordinates(view, arrow[0], bottom, left, right, top, image.width, image.height);
-			////computePixelCoordinates(view, arrow[1], bottom, left, right, top, image.width, image.height);
-			////computePixelCoordinates(view, arrow[2], bottom, left, right, top, image.width, image.height);
-			////computePixelCoordinates(view, localUp, bottom, left, right, top, image.width, image.height);
-			//drawLine(origin, localUp, magenta, image);
-			//drawLine(arrow[0], localUp, magenta, image);
-			//drawLine(arrow[1], localUp, magenta, image);
-			//drawLine(arrow[2], localUp, magenta, image);
-			// ======================
-
+			drawLine(rOrigin, rX, image, red);
+			drawLine(rOrigin, rY, image, green);
+			drawLine(rOrigin, rZ, image, blue);
+			
 			for (int i = 0; i < model.facesNumber(); i++) {
 				Vec3f triVert[3];
+				Vec3f rTriVert[3];
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
-					triVert[j] = triVert[j] * rotationXY(angleTheta, anglePhi);
-					triVert[j] = triVert[j] * view;
-					//triVert[j] = triVert[j] * rotationX(anglePhi) * rotationY(angleTheta); // It is probably a model rotation
-					//triVert[j] = triVert[j] * rotationY(angleTheta) * rotationX(anglePhi); // It is probably a model rotation
+					triVert[j] = triVert[j] * scale(0.2) * rotationXY(angleTheta, anglePhi);
+					pixelCoord(view, triVert[j], right, top, imageWidth, imageHeight, rTriVert[j]);
 				}
 
-				drawLine(triVert[0], triVert[1], white, image);
-				drawLine(triVert[1], triVert[2], white, image);
-				drawLine(triVert[2], triVert[0], white, image);
+				drawLine(rTriVert[0], rTriVert[1], image, white);
+				drawLine(rTriVert[1], rTriVert[2], image, white);
+				drawLine(rTriVert[2], rTriVert[0], image, white);
 			}
 
 			image.flip_vertically();

@@ -64,6 +64,8 @@ HWND Win32Init(int width, int height) {
 #define A_BUTTON 0x41
 #define L_BUTTON 0x4C
 #define J_BUTTON 0x4A
+#define I_BUTTON 0x49
+#define K_BUTTON 0x4B
 void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &cameraAngleTheta, float &cameraAnglePhi) {
 	MSG msg;
 
@@ -105,6 +107,16 @@ void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &camera
 					}
 				} else if (vkCode == J_BUTTON) {
 					cameraAngleTheta -= M_PI / 16;
+					if (cameraAngleTheta < 0) {
+						cameraAngleTheta = 2 * M_PI;
+					}
+				} else if (vkCode == I_BUTTON) {
+					cameraAnglePhi += M_PI / 16;
+					if (cameraAngleTheta > 2 * M_PI) {
+						cameraAngleTheta = 0;
+					}
+				} else if (vkCode == K_BUTTON) {
+					cameraAnglePhi -= M_PI / 16;
 					if (cameraAngleTheta < 0) {
 						cameraAngleTheta = 2 * M_PI;
 					}
