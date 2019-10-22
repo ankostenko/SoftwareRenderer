@@ -24,7 +24,7 @@ const int imageWidth = 800;
 
 // Camera features 
 
-Vec3f camera = { 0.0f, 0.0f, 3.0f };
+Vec3f camera = { 3.0f, 3.0f, 3.0f };
 float focalLength = 35;
 float filmApertureWidth = 0.980;
 float filmApertureHeight = 0.735;
@@ -143,9 +143,9 @@ bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidt
 	float left = -right;
 	float bottom = -top;
 
-	//if (pScreen.x > right || pScreen.x < left || pScreen.y > top || pScreen.y < bottom) {
-	//	return false;
-	//}
+	if (pScreen.x > right || pScreen.x < left || pScreen.y > top || pScreen.y < bottom) {
+		return false;
+	}
 	
 	Vec3f ndc;
 	ndc.x = (pScreen.x + right) / (2 * right);
@@ -214,10 +214,10 @@ int main(int argc, char **argv) {
 			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi);
 			
 			// Camera
-			Vec3f tCamera = camera * rotationXY(cameraAngleTheta, cameraAnglePhi);
+			Vec3f tCamera = camera * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
 			Mat4f view = lookAt(tCamera, origin);
 			view = inverse(view);
-
+			
 			Vec3f rX;
 			Vec3f rY;
 			Vec3f rZ;
@@ -237,7 +237,7 @@ int main(int argc, char **argv) {
 				Vec3f rTriVert[3];
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
-					triVert[j] = triVert[j] * scale(0.2) * rotationXY(angleTheta, anglePhi);
+					triVert[j] = triVert[j] * scale(0.4) * rotationXY(angleTheta, anglePhi);
 					pixelCoord(view, triVert[j], right, top, imageWidth, imageHeight, rTriVert[j]);
 				}
 
