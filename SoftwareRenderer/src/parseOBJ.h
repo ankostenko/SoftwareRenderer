@@ -17,7 +17,7 @@ Vec3f splitVertAndUv(std::string &str) {
 	return { vert, vn, vt };
 }
 
-void parseOBJ(Model &model, const char *pathname) {
+void loadModel(Model &model, const char *pathname) {
 	std::ifstream file;
 	file.open(pathname);
 

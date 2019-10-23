@@ -51,7 +51,6 @@ struct Vec3f {
 		return r[i];
 	}
 
-	// TODO: rewrite this thing
 	Vec3f operator*(Mat4f mat) {
 		Vec3f vec = { };
 
@@ -83,6 +82,24 @@ struct Vec3f {
 		x = x / (sqrt(x * x + y * y + z * z));
 		y = y / (sqrt(x * x + y * y + z * z));
 		z = z / (sqrt(x * x + y * y + z * z));
+	}
+};
+
+struct Vec3i {
+	union {
+		struct {
+			int x, y, z;
+		};
+		int r[3];
+	};
+
+	// If it doesn't have any cost I let it be
+	int operator[](int i) {
+		return r[i];
+	}
+
+	Vec3i operator-(Vec3i b) {
+		return { x - b.x, y - b.y, z - b.z };
 	}
 };
 
@@ -158,11 +175,13 @@ Mat4f rotationXY(float angleTheta, float anglePhi) {
 	return mat;
 }
 
-Vec3f cross(Vec3f v0, Vec3f v1) {
+template<typename T>
+T cross(T v0, T v1) {
 	return { v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x };
 }
 
-Vec3f norm(Vec3f vec) {
+template<typename T>
+Vec3f norm(T vec) {
 	float length = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 	return { vec.x / length, vec.y / length, vec.z / length };
 }
