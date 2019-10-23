@@ -12,6 +12,8 @@
 
 Model model;
 
+Vec3f lightDir = { 1.0f, 0.0f, 1.0f };
+
 Color black(0, 0, 0);
 Color white(255, 255, 255);
 Color red(0, 0, 255);
@@ -19,12 +21,12 @@ Color green(0, 255, 0);
 Color blue(255, 0, 0);
 Color magenta(255, 0, 255);
 
-const int imageHeight = 800;
 const int imageWidth = 800;
+const int imageHeight = 800;
 
 // Camera features 
 
-Vec3f camera = { 3.0f, 3.0f, 3.0f };
+Vec3f camera = { 0.0f, 3.0f, 3.0f };
 float focalLength = 35;
 float filmApertureWidth = 0.980;
 float filmApertureHeight = 0.735;
@@ -70,34 +72,12 @@ public:
 	}
 };
 
-bool computePixelCoordinates(Mat4f view, Vec3f pWorld, float b, float l, float r, float t, int imageWidth, int imageHeight, Vec3f &pRaster) {
-	Vec3f pCamera = pWorld * view;
-	
-	Vec3f pScreen;
-	if (pCamera.z < 1e-5) return false;
-	pScreen.x = pCamera.x / -pCamera.z * nearClippingPlane;
-	pScreen.y = pCamera.y / -pCamera.z * nearClippingPlane;
-
-	Vec3f pNDC;
-	pNDC.x = (pScreen.x + r) / (2 * r);
-	pNDC.y = (pScreen.y + t) / (2 * t);
-
-	pRaster.x = (int)(pNDC.x * imageWidth);
-	pRaster.y = (int)((1 - pNDC.y) * imageHeight);
-
-	if (pScreen.x < l || pScreen.x > r || pScreen.y < b || pScreen.y > t) {
-		return false;
-	}
-	return true;
-}
-
-void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
+void drawLine(Vec3i p1, Vec3i p2, Image &buffer, Color &color) {
 	float x1 = p1.x;
 	float y1 = p1.y;
 	float x2 = p2.x;
 	float y2 = p2.y;
-	
-	//transpose line if it is too steep
+
 	bool steep = false;
 	if (std::abs(x1 - x2) < std::abs(y1 - y2)) {
 		std::swap(x1, y1);
@@ -105,13 +85,11 @@ void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
 		steep = true;
 	}
 
-	//Redefine line so that it is left to right
 	if (x1 > x2) {
 		std::swap(x1, x2);
 		std::swap(y1, y2);
 	}
 
-	//Redefined to use only int arithmetic
 	int dx = x2 - x1;
 	int dy = y2 - y1;
 	int derror2 = std::abs(dy) * 2;
@@ -120,7 +98,7 @@ void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
 
 	for (int x = x1; x <= x2; x++) {
 		if (steep) {
-			buffer.set(y, x, color); //Swap back because of steep transpose
+			buffer.set(y, x, color);
 		}
 		else {
 			buffer.set(x, y, color);
@@ -133,32 +111,114 @@ void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
 	}
 }
 
-bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidth, int imageHeight, Vec3f &coords) {
+bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidth, int imageHeight, Vec3i &coords) {
 	Vec3f pCamera = pWorld * view;
-	
+
 	Vec3f pScreen;
 	pScreen.x = pCamera.x / -pCamera.z * nearClippingPlane;
 	pScreen.y = pCamera.y / -pCamera.z * nearClippingPlane;
-	
+
 	float left = -right;
 	float bottom = -top;
 
 	if (pScreen.x > right || pScreen.x < left || pScreen.y > top || pScreen.y < bottom) {
 		return false;
 	}
-	
+
 	Vec3f ndc;
 	ndc.x = (pScreen.x + right) / (2 * right);
-	ndc.y = (pScreen.y + top)   / (2 * top  );
+	ndc.y = (pScreen.y + top) / (2 * top);
 
-	coords.x = (int)(ndc.x * imageWidth);
-	coords.y = (int)((1.0f - ndc.y) * imageHeight);
+	coords.x = (ndc.x * imageWidth);
+	coords.y = ((1.0f - ndc.y) * imageHeight);
 
 	return true;
 }
 
+float edgeFunction(const Vec3i &a, const Vec3i &b, const Vec3i &c) {
+	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+}
+
+Vec3f barycentric(Vec3i A, Vec3i B, Vec3i C, Vec3i P) {
+
+	// Check whether point is inside the triangle
+	Vec3f s[2];
+	for (int i = 0; i < 2; i++) {
+		s[i].x = C[i] - A[i];
+		s[i].y = B[i] - A[i];
+		s[i].z = A[i] - P[i];
+	}
+
+	Vec3f u = cross(s[0], s[1]);
+
+	if (fabs(u.z) > 1e-2) {
+		return { 1.0f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z };
+	}
+	return { -1.0f, 0.0f, 0.0f };
+}
+
+void rasterize(Vec3i *triVert, Image &imagebuffer) {
+	// Find "border" box
+	float minX = triVert[0].x;
+	float minY = triVert[0].y;
+	float maxX = triVert[0].x;
+	float maxY = triVert[0].y;
+
+	for (int i = 1; i < 3; i++) {
+		if (triVert[i].x < minX) {
+			minX = triVert[i].x;
+		}
+		if (triVert[i].x > maxX) {
+			maxX = triVert[i].x;
+		}
+		if (triVert[i].y < minY) {
+			minY = triVert[i].y;
+		}
+		if (triVert[i].y > maxY) {
+			maxY = triVert[i].y;
+		}
+	}
+
+	float intensity = 1.0f;
+
+	Vec3i p;
+	for (p.y = minY; p.y < maxY; p.y++) {
+		for (p.x = minX; p.x < maxX; p.x++) {
+			// Determine whether point inside the triangle or not
+			//float area = edgeFunction(triVert[0], triVert[1], triVert[2]);
+			//float w0 = edgeFunction(p, triVert[1], triVert[2]);
+			//float w1 = edgeFunction(p, triVert[2], triVert[0]);
+			//float w2 = edgeFunction(p, triVert[0], triVert[1]);
+
+			//if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+			//	// Barycentric coordinates
+			//	w0 /= area;
+			//	w1 /= area;
+			//	w2 /= area;
+
+			//	int x = (p.x * w0) + (p.x * w1) + (p.x * w2);
+			//	int y = (p.y * w0) + (p.y * w1) + (p.y * w2);
+
+			//	Color color(255 * intensity, 255 * intensity, 255 * intensity);
+			//	imagebuffer.set(x, y, color);
+			//}
+
+			Vec3f barcen = barycentric(triVert[0], triVert[1], triVert[2], p);
+
+			if (barcen.x < 0 || barcen.y < 0 || barcen.z < 0) {
+				continue;
+			}
+
+			int x = p.x * barcen.x + p.x * barcen.y + p.x * barcen.z;
+			int y = p.y * barcen.y + p.y * barcen.y + p.y * barcen.z;
+
+			imagebuffer.set(x, y, white);
+		}
+	}
+}
+
 int main(int argc, char **argv) {
-	parseOBJ(model, ".\\models\\teapot.obj");
+	loadModel(model, ".\\models\\plane.obj");
 
 	Image image(imageWidth, imageHeight);
 
@@ -187,11 +247,21 @@ int main(int argc, char **argv) {
 	float xscale = 1;
 	float yscale = 1;
 
+#if 1
 	if (filmAspectRatio > deviceAspectRatio) {
 		xscale = deviceAspectRatio / filmAspectRatio;
-	} else {
+	}
+	else {
 		yscale = filmAspectRatio / deviceAspectRatio;
 	}
+#else
+	if (filmAspectRatio > deviceAspectRatio) {
+		yscale = filmAspectRatio / deviceAspectRatio;
+	}
+	else {
+		xscale = deviceAspectRatio / filmAspectRatio;
+	}
+#endif
 
 	right *= xscale;
 	top *= yscale;
@@ -210,18 +280,22 @@ int main(int argc, char **argv) {
 			fpsLock.ResetStartTime();
 
 			memset(image.data, 0, image.size());
+			//Color peach(185, 218, 255);
+			//for (int i = 0; i < image.size(); i += image.bytepp) {
+			//	memmove(&image.data[i], black.rgba, image.bytepp);
+			//}
 
 			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi);
-			
+
 			// Camera
 			Vec3f tCamera = camera * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
 			Mat4f view = lookAt(tCamera, origin);
 			view = inverse(view);
-			
-			Vec3f rX;
-			Vec3f rY;
-			Vec3f rZ;
-			Vec3f rOrigin;
+
+			Vec3i rX;
+			Vec3i rY;
+			Vec3i rZ;
+			Vec3i rOrigin;
 
 			if (!pixelCoord(view, X, right, top, imageWidth, imageHeight, rX)) continue;
 			if (!pixelCoord(view, Y, right, top, imageWidth, imageHeight, rY)) continue;
@@ -231,19 +305,20 @@ int main(int argc, char **argv) {
 			drawLine(rOrigin, rX, image, red);
 			drawLine(rOrigin, rY, image, green);
 			drawLine(rOrigin, rZ, image, blue);
-			
+
 			for (int i = 0; i < model.facesNumber(); i++) {
 				Vec3f triVert[3];
-				Vec3f rTriVert[3];
+				Vec3i rTriVert[3];
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
-					triVert[j] = triVert[j] * scale(0.4) * rotationXY(angleTheta, anglePhi);
+					triVert[j] = triVert[j] * scale(0.3) * rotationXY(angleTheta, anglePhi);
 					pixelCoord(view, triVert[j], right, top, imageWidth, imageHeight, rTriVert[j]);
 				}
 
-				drawLine(rTriVert[0], rTriVert[1], image, white);
-				drawLine(rTriVert[1], rTriVert[2], image, white);
-				drawLine(rTriVert[2], rTriVert[0], image, white);
+				//drawLine(rTriVert[0], rTriVert[1], image, white);
+				//drawLine(rTriVert[1], rTriVert[2], image, white);
+				//drawLine(rTriVert[2], rTriVert[0], image, white);
+				rasterize(rTriVert, image);
 			}
 
 			image.flip_vertically();
@@ -259,10 +334,9 @@ int main(int argc, char **argv) {
 	}
 
 	// image.flip_vertically();
-	stbi_write_png("output.png", imageWidth, imageHeight, image.bytepp, image.data, imageWidth * image.bytepp);
+	// stbi_write_png("output.png", imageWidth, imageHeight, image.bytepp, image.data, imageWidth * image.bytepp);
 
 	//system("pause");
 
-	//SDL_Quit();
 	return 0;
 }
