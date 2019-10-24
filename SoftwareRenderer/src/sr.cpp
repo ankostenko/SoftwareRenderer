@@ -10,9 +10,10 @@
 #include "winlayer.h"
 #include "Timer.cpp"
 
+bool globalRunning = true;
 Model model;
 
-Vec3f lightDir = { 1.0f, 0.0f, 1.0f };
+Vec3f lightDir = { 2.0f, 1.0f, 4.0f };
 
 Color black(0, 0, 0);
 Color white(255, 255, 255);
@@ -21,8 +22,8 @@ Color green(0, 255, 0);
 Color blue(255, 0, 0);
 Color magenta(255, 0, 255);
 
-const int imageWidth = 800;
-const int imageHeight = 800;
+int imageWidth =  900;
+int imageHeight = 700;
 
 // Camera features 
 
@@ -137,32 +138,20 @@ bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidt
 
 float edgeFunction(const Vec3i &a, const Vec3i &b, const Vec3i &c) {
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+	//return(b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
 }
 
-Vec3f barycentric(Vec3i A, Vec3i B, Vec3i C, Vec3i P) {
-
-	// Check whether point is inside the triangle
-	Vec3f s[2];
-	for (int i = 0; i < 2; i++) {
-		s[i].x = C[i] - A[i];
-		s[i].y = B[i] - A[i];
-		s[i].z = A[i] - P[i];
-	}
-
-	Vec3f u = cross(s[0], s[1]);
-
-	if (fabs(u.z) > 1e-2) {
-		return { 1.0f - (u.x + u.y) / u.z, u.y / u.z, u.x / u.z };
-	}
-	return { -1.0f, 0.0f, 0.0f };
+Vec3f barycentric(Vec3i v0, Vec3i v1, Vec3i v2, Vec3i p) {
+	Vec3f bar = { };
+	return bar;
 }
 
-void rasterize(Vec3i *triVert, Image &imagebuffer) {
+void rasterize(Vec3i *triVert, Vec3f *globalVert, Image &imagebuffer) {
 	// Find "border" box
-	float minX = triVert[0].x;
-	float minY = triVert[0].y;
-	float maxX = triVert[0].x;
-	float maxY = triVert[0].y;
+	int minX = triVert[0].x;
+	int minY = triVert[0].y;
+	int maxX = triVert[0].x;
+	int maxY = triVert[0].y;
 
 	for (int i = 1; i < 3; i++) {
 		if (triVert[i].x < minX) {
@@ -179,46 +168,46 @@ void rasterize(Vec3i *triVert, Image &imagebuffer) {
 		}
 	}
 
-	float intensity = 1.0f;
+	Vec3f edgeNormal = norm(cross(globalVert[2] - globalVert[0], globalVert[1] - globalVert[0]));
+	float intensity = norm(lightDir) * edgeNormal;
+	if (intensity > 1.0f) {
+		intensity = 1.0f;
+	}
+	if (intensity < 0) {
+		intensity = 0;
+	}
 
 	Vec3i p;
+	float area = edgeFunction(triVert[0], triVert[1], triVert[2]);
 	for (p.y = minY; p.y < maxY; p.y++) {
 		for (p.x = minX; p.x < maxX; p.x++) {
 			// Determine whether point inside the triangle or not
-			//float area = edgeFunction(triVert[0], triVert[1], triVert[2]);
-			//float w0 = edgeFunction(p, triVert[1], triVert[2]);
-			//float w1 = edgeFunction(p, triVert[2], triVert[0]);
-			//float w2 = edgeFunction(p, triVert[0], triVert[1]);
+			float w0 = edgeFunction(p, triVert[1], triVert[2]);
+			float w1 = edgeFunction(p, triVert[2], triVert[0]);
+			float w2 = edgeFunction(p, triVert[0], triVert[1]);
+			
+			if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+				// Barycentric coordinates
+				w0 /= area;
+				w1 /= area;
+				w2 /= area;
 
-			//if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-			//	// Barycentric coordinates
-			//	w0 /= area;
-			//	w1 /= area;
-			//	w2 /= area;
+				w0 = w0 + w0 * 10e-5;
+				w1 = w1 + w0 * 10e-5;
+				w2 = w2 + w0 * 10e-5;
 
-			//	int x = (p.x * w0) + (p.x * w1) + (p.x * w2);
-			//	int y = (p.y * w0) + (p.y * w1) + (p.y * w2);
-
-			//	Color color(255 * intensity, 255 * intensity, 255 * intensity);
-			//	imagebuffer.set(x, y, color);
-			//}
-
-			Vec3f barcen = barycentric(triVert[0], triVert[1], triVert[2], p);
-
-			if (barcen.x < 0 || barcen.y < 0 || barcen.z < 0) {
-				continue;
+				int x = (p.x * w0) + (p.x * w1) + (p.x * w2);
+				int y = (p.y * w0) + (p.y * w1) + (p.y * w2);
+			
+				Color color(255 * intensity, 255 * intensity, 255 * intensity);
+				imagebuffer.set(x, y, color);
 			}
-
-			int x = p.x * barcen.x + p.x * barcen.y + p.x * barcen.z;
-			int y = p.y * barcen.y + p.y * barcen.y + p.y * barcen.z;
-
-			imagebuffer.set(x, y, white);
 		}
 	}
 }
 
 int main(int argc, char **argv) {
-	loadModel(model, ".\\models\\plane.obj");
+	loadModel(model, ".\\models\\teapot.obj");
 
 	Image image(imageWidth, imageHeight);
 
@@ -275,7 +264,7 @@ int main(int argc, char **argv) {
 	Vec3f Z = { 0.0f, 0.0f, 1.0f };
 	Vec3f origin = { 0.0f, 0.0f, 0.0f };
 
-	while (1) {
+	while (globalRunning) {
 		if (fpsLock.milliElapsed() > 16.0f) {
 			fpsLock.ResetStartTime();
 
@@ -318,7 +307,7 @@ int main(int argc, char **argv) {
 				//drawLine(rTriVert[0], rTriVert[1], image, white);
 				//drawLine(rTriVert[1], rTriVert[2], image, white);
 				//drawLine(rTriVert[2], rTriVert[0], image, white);
-				rasterize(rTriVert, image);
+				rasterize(rTriVert, triVert, image);
 			}
 
 			image.flip_vertically();

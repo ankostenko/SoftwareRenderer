@@ -1,5 +1,7 @@
 #pragma once
 
+extern bool globalRunning;
+
 #include <windows.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -120,6 +122,8 @@ void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &camera
 					if (cameraAngleTheta < 0) {
 						cameraAngleTheta = 2 * M_PI;
 					}
+				} else if (vkCode == VK_ESCAPE) {
+					globalRunning = !globalRunning;
 				}
 
 			}
