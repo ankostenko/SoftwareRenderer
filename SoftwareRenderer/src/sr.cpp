@@ -21,6 +21,7 @@ Color red(0, 0, 255);
 Color green(0, 255, 0);
 Color blue(255, 0, 0);
 Color magenta(255, 0, 255);
+Color peach(185, 218, 255);
 
 int imageWidth =  900;
 int imageHeight = 700;
@@ -73,7 +74,7 @@ public:
 	}
 };
 
-void drawLine(Vec3i p1, Vec3i p2, Image &buffer, Color &color) {
+void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
 	float x1 = p1.x;
 	float y1 = p1.y;
 	float x2 = p2.x;
@@ -112,7 +113,7 @@ void drawLine(Vec3i p1, Vec3i p2, Image &buffer, Color &color) {
 	}
 }
 
-bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidth, int imageHeight, Vec3i &coords) {
+bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidth, int imageHeight, Vec3f &coords) {
 	Vec3f pCamera = pWorld * view;
 
 	Vec3f pScreen;
@@ -130,15 +131,18 @@ bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidt
 	ndc.x = (pScreen.x + right) / (2 * right);
 	ndc.y = (pScreen.y + top) / (2 * top);
 
-	coords.x = (ndc.x * imageWidth);
-	coords.y = ((1.0f - ndc.y) * imageHeight);
+	coords.x = int((ndc.x * imageWidth));
+	coords.y = int(((1.0f - ndc.y) * imageHeight));
+	coords.z = -pCamera.z;
 
 	return true;
 }
 
-float edgeFunction(const Vec3i &a, const Vec3i &b, const Vec3i &c) {
-	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
-	//return(b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
+float edgeFunction(const Vec3f &a, const Vec3f &b, const Vec3f &c) {
+	Vec3i ai = { int(a.x), int(a.y), int(a.z) };
+	Vec3i bi = { int(b.x), int(b.y), int(b.z) };
+	Vec3i ci = { int(c.x), int(c.y), int(c.z) };
+	return (ci.x - ai.x) * (bi.y - ai.y) - (ci.y - ai.y) * (bi.x - ai.x);
 }
 
 Vec3f barycentric(Vec3i v0, Vec3i v1, Vec3i v2, Vec3i p) {
@@ -146,7 +150,7 @@ Vec3f barycentric(Vec3i v0, Vec3i v1, Vec3i v2, Vec3i p) {
 	return bar;
 }
 
-void rasterize(Vec3i *triVert, Vec3f *globalVert, Image &imagebuffer) {
+void rasterize(Vec3f *triVert, Vec3f *globalVert, Image &imagebuffer, float *zbuffer) {
 	// Find "border" box
 	int minX = triVert[0].x;
 	int minY = triVert[0].y;
@@ -177,8 +181,12 @@ void rasterize(Vec3i *triVert, Vec3f *globalVert, Image &imagebuffer) {
 		intensity = 0;
 	}
 
-	Vec3i p;
+	Vec3f p;
 	float area = edgeFunction(triVert[0], triVert[1], triVert[2]);
+	if (area <= 0) {
+		return;
+	}
+
 	for (p.y = minY; p.y < maxY; p.y++) {
 		for (p.x = minX; p.x < maxX; p.x++) {
 			// Determine whether point inside the triangle or not
@@ -192,22 +200,27 @@ void rasterize(Vec3i *triVert, Vec3f *globalVert, Image &imagebuffer) {
 				w1 /= area;
 				w2 /= area;
 
-				w0 = w0 + w0 * 10e-5;
-				w1 = w1 + w0 * 10e-5;
-				w2 = w2 + w0 * 10e-5;
+				w0 = w0 + 10e-5;
+				w1 = w1 + 10e-5;
+				w2 = w2 + 10e-5;
 
 				int x = (p.x * w0) + (p.x * w1) + (p.x * w2);
 				int y = (p.y * w0) + (p.y * w1) + (p.y * w2);
-			
-				Color color(255 * intensity, 255 * intensity, 255 * intensity);
-				imagebuffer.set(x, y, color);
+				float z = 1 / (w0 / triVert[0].z + w1 / triVert[1].z + w2 / triVert[2].z);
+
+				if (z < zbuffer[x + y * imagebuffer.width]) {
+					zbuffer[x + y * imagebuffer.width] = z;
+					Color color(255 * intensity, 255 * intensity, 255 * intensity);
+					imagebuffer.set(x, y, color);
+				}
+
 			}
 		}
 	}
 }
 
 int main(int argc, char **argv) {
-	loadModel(model, ".\\models\\teapot.obj");
+	loadModel(model, ".\\models\\deer.obj");
 
 	Image image(imageWidth, imageHeight);
 
@@ -264,15 +277,20 @@ int main(int argc, char **argv) {
 	Vec3f Z = { 0.0f, 0.0f, 1.0f };
 	Vec3f origin = { 0.0f, 0.0f, 0.0f };
 
+	float *zbuffer = new float[image.width * image.height];
+
 	while (globalRunning) {
 		if (fpsLock.milliElapsed() > 16.0f) {
 			fpsLock.ResetStartTime();
 
+			for (int i = 0; i < image.width * image.height; i++) {
+				zbuffer[i] = farClippingPlane;
+			}
+
 			memset(image.data, 0, image.size());
-			//Color peach(185, 218, 255);
-			//for (int i = 0; i < image.size(); i += image.bytepp) {
-			//	memmove(&image.data[i], black.rgba, image.bytepp);
-			//}
+			for (int i = 0; i < image.size(); i += image.bytepp) {
+				memmove(&image.data[i], peach.rgba, image.bytepp);
+			}
 
 			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi);
 
@@ -281,10 +299,10 @@ int main(int argc, char **argv) {
 			Mat4f view = lookAt(tCamera, origin);
 			view = inverse(view);
 
-			Vec3i rX;
-			Vec3i rY;
-			Vec3i rZ;
-			Vec3i rOrigin;
+			Vec3f rX;
+			Vec3f rY;
+			Vec3f rZ;
+			Vec3f rOrigin;
 
 			if (!pixelCoord(view, X, right, top, imageWidth, imageHeight, rX)) continue;
 			if (!pixelCoord(view, Y, right, top, imageWidth, imageHeight, rY)) continue;
@@ -297,17 +315,16 @@ int main(int argc, char **argv) {
 
 			for (int i = 0; i < model.facesNumber(); i++) {
 				Vec3f triVert[3];
-				Vec3i rTriVert[3];
+				Vec3f rTriVert[3];
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
-					triVert[j] = triVert[j] * scale(0.3) * rotationXY(angleTheta, anglePhi);
-					pixelCoord(view, triVert[j], right, top, imageWidth, imageHeight, rTriVert[j]);
+					triVert[j] = triVert[j] * scale(0.001) * rotationXY(angleTheta, anglePhi);
 				}
+				if (!pixelCoord(view, triVert[0], right, top, imageWidth, imageHeight, rTriVert[0])) continue;
+				if (!pixelCoord(view, triVert[1], right, top, imageWidth, imageHeight, rTriVert[1])) continue;
+				if (!pixelCoord(view, triVert[2], right, top, imageWidth, imageHeight, rTriVert[2])) continue;
 
-				//drawLine(rTriVert[0], rTriVert[1], image, white);
-				//drawLine(rTriVert[1], rTriVert[2], image, white);
-				//drawLine(rTriVert[2], rTriVert[0], image, white);
-				rasterize(rTriVert, triVert, image);
+				rasterize(rTriVert, triVert, image, zbuffer);
 			}
 
 			image.flip_vertically();
