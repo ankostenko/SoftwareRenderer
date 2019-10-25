@@ -120,8 +120,9 @@ Mat4f scale(float scaleValue) {
 	return mat;
 }
 
-Mat4f translate(float values[4]) {
+Mat4f translate(float x, float y, float z) {
 	Mat4f mat = identity();
+	float values[4] = { x, y, z, 1.0f };
 	mat.setRow(3, values);
 	return mat;
 }
