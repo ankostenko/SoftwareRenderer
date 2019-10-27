@@ -207,8 +207,6 @@ Mat4f lookAt(Vec3f from, Vec3f to) {
 	return ret;
 }
 
-// This is pretty bad I probably shouldn't compute that thing
-// It ruins performance completely
 int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
 	int i, j, k, imax;
 	float maxA, absA;
