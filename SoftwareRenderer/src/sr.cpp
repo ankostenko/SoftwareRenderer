@@ -13,7 +13,7 @@
 bool globalRunning = true;
 Model model;
 
-Vec3f lightDir = { 2.0f, 1.0f, 4.0f };
+Vec3f lightDir = { 2.0f, 1.0f, -4.0f };
 
 Color black(0, 0, 0);
 Color white(255, 255, 255);
@@ -23,8 +23,8 @@ Color blue(255, 0, 0);
 Color magenta(255, 0, 255);
 Color peach(185, 218, 255);
 
-int imageWidth =  900;
-int imageHeight = 700;
+int imageWidth =  1300;
+int imageHeight = 900;
 
 // Camera features 
 
@@ -220,7 +220,7 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Image &imagebuffer, float *zbu
 }
 
 int main(int argc, char **argv) {
-	loadModel(model, ".\\models\\deer.obj");
+	loadModel(model, ".\\models\\teapot.obj");
 
 	Image image(imageWidth, imageHeight);
 
@@ -237,6 +237,7 @@ int main(int argc, char **argv) {
 	float anglePhi = 0;
 	float cameraAngleTheta = 0;
 	float cameraAnglePhi = 0;
+	float scaleVariable = 0.5f;
 
 	Timer fpsLock;
 
@@ -287,12 +288,12 @@ int main(int argc, char **argv) {
 				zbuffer[i] = farClippingPlane;
 			}
 
-			memset(image.data, 0, image.size());
+			// memset(image.data, 0, image.size());
 			for (int i = 0; i < image.size(); i += image.bytepp) {
 				memmove(&image.data[i], peach.rgba, image.bytepp);
 			}
 
-			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi);
+			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi, scaleVariable);
 
 			// Camera
 			Vec3f tCamera = camera * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
@@ -318,7 +319,7 @@ int main(int argc, char **argv) {
 				Vec3f rTriVert[3];
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
-					triVert[j] = triVert[j] * scale(0.001) * rotationXY(angleTheta, anglePhi);
+					triVert[j] = triVert[j] * scale(scaleVariable) * rotationXY(angleTheta, anglePhi);
 				}
 				if (!pixelCoord(view, triVert[0], right, top, imageWidth, imageHeight, rTriVert[0])) continue;
 				if (!pixelCoord(view, triVert[1], right, top, imageWidth, imageHeight, rTriVert[1])) continue;

@@ -68,7 +68,9 @@ HWND Win32Init(int width, int height) {
 #define J_BUTTON 0x4A
 #define I_BUTTON 0x49
 #define K_BUTTON 0x4B
-void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &cameraAngleTheta, float &cameraAnglePhi) {
+#define X_BUTTON 0x58
+#define Z_BUTTON 0x5A
+void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &cameraAngleTheta, float &cameraAnglePhi, float &scaleVariable) {
 	MSG msg;
 
 	if (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
@@ -124,6 +126,10 @@ void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &camera
 					}
 				} else if (vkCode == VK_ESCAPE) {
 					globalRunning = !globalRunning;
+				} else if (vkCode == X_BUTTON) {
+					scaleVariable *= 1.2f;
+				} else if (vkCode == Z_BUTTON) {
+					scaleVariable /= 1.2f;
 				}
 
 			}
