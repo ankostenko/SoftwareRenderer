@@ -4,6 +4,7 @@
 #include <math.h>
 #include "parseOBJ.h"
 #include "Color.h"
+#include "Image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
 
@@ -12,6 +13,7 @@
 
 bool globalRunning = true;
 Model model;
+Image texture;
 
 Vec3f lightDir = { 2.0f, 1.0f, -4.0f };
 
@@ -28,51 +30,13 @@ int imageHeight = 900;
 
 // Camera features 
 
-Vec3f camera = { 0.0f, 3.0f, 3.0f };
+Vec3f camera = { 0.0f, 0.0f, 0.0f };
 float focalLength = 35;
 float filmApertureWidth = 0.980;
 float filmApertureHeight = 0.735;
 const float inch2mm = 25.4f;
 float nearClippingPlane = 0.1f;
 float farClippingPlane = 1000.0f;
-
-struct Image {
-private:
-	enum BytePerPixel {
-		MONO = 1, RGB = 3, RGBA = 4,
-	};
-
-public:
-	unsigned char *data;
-	int width, height;
-	int bytepp;
-
-	Image(int width, int height, BytePerPixel bytepp = RGB) : width(width), height(height), bytepp(bytepp) {
-		data = new unsigned char[bytepp * width * height];
-	}
-
-	void set(int x, int y, Color color) {
-		if (x < 0 || y < 0 || x >= width || y >= height) {
-			return;
-		}
-
-		memmove(&data[(x + y * width) * bytepp], color.rgba, bytepp);
-	}
-
-	size_t size() {
-		return width * height * bytepp;
-	}
-
-	void flip_vertically() {
-		void *temp = new unsigned char[width * bytepp];
-		for (int y = 0; y < height / 2; y++) {
-			memcpy(temp, &data[y * width * bytepp], width * bytepp);
-			memcpy(&data[y * width * bytepp], &data[(height - 1 - y) * width * bytepp], width * bytepp);
-			memcpy(&data[(height - 1 - y) * width * bytepp], temp, width * bytepp);
-		}
-		delete temp;
-	}
-};
 
 void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
 	float x1 = p1.x;
@@ -122,9 +86,18 @@ bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidt
 
 	float left = -right;
 	float bottom = -top;
-
-	if (pScreen.x > right || pScreen.x < left || pScreen.y > top || pScreen.y < bottom) {
-		return false;
+	
+	if (pScreen.x > right) {
+		pScreen.x = right;
+	}
+	if (pScreen.x < left) {
+		pScreen.x = left;
+	}
+	if (pScreen.y < bottom) {
+		pScreen.y = bottom;
+	}
+	if (pScreen.y > top) {
+		pScreen.y = top;
 	}
 
 	Vec3f ndc;
@@ -150,7 +123,7 @@ Vec3f barycentric(Vec3i v0, Vec3i v1, Vec3i v2, Vec3i p) {
 	return bar;
 }
 
-void rasterize(Vec3f *triVert, Vec3f *globalVert, Image &imagebuffer, float *zbuffer) {
+void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer, float *zbuffer) {
 	// Find "border" box
 	int minX = triVert[0].x;
 	int minY = triVert[0].y;
@@ -178,15 +151,15 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Image &imagebuffer, float *zbu
 		intensity = 1.0f;
 	}
 	if (intensity < 0) {
-		intensity = 0;
+		intensity = -intensity * 0.3;
 	}
-
 	Vec3f p;
 	float area = edgeFunction(triVert[0], triVert[1], triVert[2]);
 	if (area <= 0) {
 		return;
 	}
 
+#define DEBUG_HAS_TEXTURE 0
 	for (p.y = minY; p.y < maxY; p.y++) {
 		for (p.x = minX; p.x < maxX; p.x++) {
 			// Determine whether point inside the triangle or not
@@ -208,10 +181,27 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Image &imagebuffer, float *zbu
 				int y = (p.y * w0) + (p.y * w1) + (p.y * w2);
 				float z = 1 / (w0 / triVert[0].z + w1 / triVert[1].z + w2 / triVert[2].z);
 
+				if (x >= imagebuffer.width || x < 0 || y >= imagebuffer.height || y < 0) continue;
+
 				if (z < zbuffer[x + y * imagebuffer.width]) {
 					zbuffer[x + y * imagebuffer.width] = z;
+#if DEBUG_HAS_TEXTURE
+					// Perspective correct texture interpolation
+					float uvX = uv[0].x * w0 * z / triVert[0].z + uv[1].x * w1 * z / triVert[1].z + uv[2].x * w2 * z / triVert[2].z;
+					float uvY = uv[0].y * w0 * z / triVert[0].z + uv[1].y * w1 * z / triVert[1].z + uv[2].y * w2 * z / triVert[2].z;
+
+					uvX *= texture.width;
+					uvY *= texture.height;
+
+					unsigned char r = texture.get(uvX, uvY).r;
+					unsigned char g = texture.get(uvX, uvY).g;
+					unsigned char b = texture.get(uvX, uvY).b;
+
+					Color color(r, g, b);
+#endif
 					Color color(255 * intensity, 255 * intensity, 255 * intensity);
-					imagebuffer.set(x, y, color);
+
+					imagebuffer.set(x, y, color);	
 				}
 
 			}
@@ -220,7 +210,8 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Image &imagebuffer, float *zbu
 }
 
 int main(int argc, char **argv) {
-	loadModel(model, ".\\models\\teapot.obj");
+	loadModel(model, ".\\models\\african_head.obj");
+	loadTexture(texture, ".\\models\\check_pattern.jpg");
 
 	Image image(imageWidth, imageHeight);
 
@@ -296,7 +287,7 @@ int main(int argc, char **argv) {
 			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi, scaleVariable);
 
 			// Camera
-			Vec3f tCamera = camera * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
+			Vec3f tCamera = camera * translate(0.0f, 2.0f, 3.0f) * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
 			Mat4f view = lookAt(tCamera, origin);
 			view = inverse(view);
 
@@ -317,15 +308,17 @@ int main(int argc, char **argv) {
 			for (int i = 0; i < model.facesNumber(); i++) {
 				Vec3f triVert[3];
 				Vec3f rTriVert[3];
+				Vec3f textureUV[3];
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
+					textureUV[j] = model.triUV(i, j);
 					triVert[j] = triVert[j] * scale(scaleVariable) * rotationXY(angleTheta, anglePhi);
 				}
 				if (!pixelCoord(view, triVert[0], right, top, imageWidth, imageHeight, rTriVert[0])) continue;
 				if (!pixelCoord(view, triVert[1], right, top, imageWidth, imageHeight, rTriVert[1])) continue;
 				if (!pixelCoord(view, triVert[2], right, top, imageWidth, imageHeight, rTriVert[2])) continue;
 
-				rasterize(rTriVert, triVert, image, zbuffer);
+				rasterize(rTriVert, triVert, textureUV, image, zbuffer);
 			}
 
 			image.flip_vertically();
