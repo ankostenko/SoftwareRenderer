@@ -31,12 +31,9 @@ int imageHeight = 900;
 // Camera features 
 
 Vec3f camera = { 0.0f, 0.0f, 0.0f };
-float focalLength = 35;
-float filmApertureWidth = 0.980;
-float filmApertureHeight = 0.735;
-const float inch2mm = 25.4f;
 float nearClippingPlane = 0.1f;
 float farClippingPlane = 1000.0f;
+float fov = M_PI / 2;
 
 void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
 	float x1 = p1.x;
@@ -158,7 +155,6 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 	if (area <= 0) {
 		return;
 	}
-
 #define DEBUG_HAS_TEXTURE 0
 	for (p.y = minY; p.y < maxY; p.y++) {
 		for (p.x = minX; p.x < maxX; p.x++) {
@@ -173,15 +169,14 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 				w1 /= area;
 				w2 /= area;
 
-				w0 = w0 + 10e-5;
-				w1 = w1 + 10e-5;
-				w2 = w2 + 10e-5;
-
-				int x = (p.x * w0) + (p.x * w1) + (p.x * w2);
-				int y = (p.y * w0) + (p.y * w1) + (p.y * w2);
+				int x = roundf((p.x * w0) + (p.x * w1) + (p.x * w2));
+				int y = roundf((p.y * w0) + (p.y * w1) + (p.y * w2));
 				float z = 1 / (w0 / triVert[0].z + w1 / triVert[1].z + w2 / triVert[2].z);
 
-				if (x >= imagebuffer.width || x < 0 || y >= imagebuffer.height || y < 0) continue;
+				// Clipping
+				if (x >= imagebuffer.width || x < 0 || y >= imagebuffer.height || y < 0) {
+					continue; 
+				}
 
 				if (z < zbuffer[x + y * imagebuffer.width]) {
 					zbuffer[x + y * imagebuffer.width] = z;
@@ -198,8 +193,9 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 					unsigned char b = texture.get(uvX, uvY).b;
 
 					Color color(r, g, b);
+#else
+					Color color(blue.r * intensity, blue.g * intensity, blue.b * intensity);
 #endif
-					Color color(255 * intensity, 255 * intensity, 255 * intensity);
 
 					imagebuffer.set(x, y, color);	
 				}
@@ -210,7 +206,7 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 }
 
 int main(int argc, char **argv) {
-	loadModel(model, ".\\models\\african_head.obj");
+	loadModel(model, ".\\models\\teapot.obj");
 	loadTexture(texture, ".\\models\\check_pattern.jpg");
 
 	Image image(imageWidth, imageHeight);
@@ -231,37 +227,6 @@ int main(int argc, char **argv) {
 	float scaleVariable = 0.5f;
 
 	Timer fpsLock;
-
-	float filmAspectRatio = filmApertureWidth / filmApertureHeight;
-	float deviceAspectRatio = imageWidth / (float)imageHeight;
-
-	float top = ((filmApertureHeight * inch2mm / 2) / focalLength) * nearClippingPlane;
-	float right = ((filmApertureWidth * inch2mm / 2) / focalLength) * nearClippingPlane;
-
-	float xscale = 1;
-	float yscale = 1;
-
-#if 1
-	if (filmAspectRatio > deviceAspectRatio) {
-		xscale = deviceAspectRatio / filmAspectRatio;
-	}
-	else {
-		yscale = filmAspectRatio / deviceAspectRatio;
-	}
-#else
-	if (filmAspectRatio > deviceAspectRatio) {
-		yscale = filmAspectRatio / deviceAspectRatio;
-	}
-	else {
-		xscale = deviceAspectRatio / filmAspectRatio;
-	}
-#endif
-
-	right *= xscale;
-	top *= yscale;
-
-	float left = -right;
-	float bottom = -top;
 
 	// World coordinate system
 	Vec3f X = { 1.0f, 0.0f, 0.0f };
@@ -287,19 +252,28 @@ int main(int argc, char **argv) {
 			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi, scaleVariable);
 
 			// Camera
-			Vec3f tCamera = camera * translate(0.0f, 2.0f, 3.0f) * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
+			Vec3f tCamera = camera * translate(0.0f, 0.0f, 3.0f) * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
 			Mat4f view = lookAt(tCamera, origin);
 			view = inverse(view);
 
-			Vec3f rX;
-			Vec3f rY;
-			Vec3f rZ;
-			Vec3f rOrigin;
+			Vec3f rX = X * view * projection(fov, nearClippingPlane, farClippingPlane);
+			Vec3f rY = Y * view * projection(fov, nearClippingPlane, farClippingPlane);
+			Vec3f rZ = Z * view * projection(fov, nearClippingPlane, farClippingPlane);
+			Vec3f rOrigin = origin * view * projection(fov, nearClippingPlane, farClippingPlane);
 
-			if (!pixelCoord(view, X, right, top, imageWidth, imageHeight, rX)) continue;
-			if (!pixelCoord(view, Y, right, top, imageWidth, imageHeight, rY)) continue;
-			if (!pixelCoord(view, Z, right, top, imageWidth, imageHeight, rZ)) continue;
-			if (!pixelCoord(view, origin, right, top, imageWidth, imageHeight, rOrigin)) continue;
+			rX.x = (rX.x + 1.0f) * 0.5f * imageWidth;
+			rX.y = (1.0f - (rX.y + 1.0f) * 0.5) * imageHeight;
+			rY.x = (rY.x + 1.0f) * 0.5f * imageWidth;
+			rY.y = (1.0f - (rY.y + 1.0f) * 0.5) * imageHeight;
+			rZ.x = (rZ.x + 1.0f) * 0.5f * imageWidth;
+			rZ.y = (1.0f - (rZ.y + 1.0f) * 0.5) * imageHeight;
+			rOrigin.x = (rOrigin.x + 1.0f) * 0.5f * imageWidth;
+			rOrigin.y = (1.0f - (rOrigin.y + 1.0f) * 0.5) * imageHeight;
+
+			//if (!pixelCoord(view, X, right, top, imageWidth, imageHeight, rX)) continue;
+			//if (!pixelCoord(view, Y, right, top, imageWidth, imageHeight, rY)) continue;
+			//if (!pixelCoord(view, Z, right, top, imageWidth, imageHeight, rZ)) continue;
+			//if (!pixelCoord(view, origin, right, top, imageWidth, imageHeight, rOrigin)) continue;
 
 			drawLine(rOrigin, rX, image, red);
 			drawLine(rOrigin, rY, image, green);
@@ -313,11 +287,21 @@ int main(int argc, char **argv) {
 					triVert[j] = model.triVert(i, j);
 					textureUV[j] = model.triUV(i, j);
 					triVert[j] = triVert[j] * scale(scaleVariable) * rotationXY(angleTheta, anglePhi);
+					
+					rTriVert[j] = triVert[j] * view;
+					rTriVert[j] = rTriVert[j] * projection(fov, nearClippingPlane, farClippingPlane);
+					if (rTriVert[j].x < -1.0f || rTriVert[j].x > 1.0f || rTriVert[j].y < -1.0f || rTriVert[j].y > 1.0f) {
+						continue;
+					}
+					rTriVert[j].x = (rTriVert[j].x + 1.0f) * 0.5f * imageWidth;
+					rTriVert[j].y = (1.0f - (rTriVert[j].y + 1.0f)  * 0.5f)* imageHeight;
 				}
-				if (!pixelCoord(view, triVert[0], right, top, imageWidth, imageHeight, rTriVert[0])) continue;
-				if (!pixelCoord(view, triVert[1], right, top, imageWidth, imageHeight, rTriVert[1])) continue;
-				if (!pixelCoord(view, triVert[2], right, top, imageWidth, imageHeight, rTriVert[2])) continue;
 
+				//if (!pixelCoord(view, triVert[0], right, top, imageWidth, imageHeight, rTriVert[0])) continue;
+				//if (!pixelCoord(view, triVert[1], right, top, imageWidth, imageHeight, rTriVert[1])) continue;
+				//if (!pixelCoord(view, triVert[2], right, top, imageWidth, imageHeight, rTriVert[2])) continue;
+
+				//rasterize(rTriVert, triVert, textureUV, image, zbuffer);
 				rasterize(rTriVert, triVert, textureUV, image, zbuffer);
 			}
 

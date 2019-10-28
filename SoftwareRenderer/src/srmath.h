@@ -14,6 +14,14 @@ struct Matrix {
 		}
 	}
 
+	void setRow(int idx, T p0, T p1, T p2, T p3) {
+		assert(idx < row);
+		mat[idx][0] = p0;
+		mat[idx][1] = p1;
+		mat[idx][2] = p2;
+		mat[idx][3] = p3;
+	}
+
 	void setDiagonal(T value) {
 		mat[0][0] = value;
 		mat[1][1] = value;
@@ -54,14 +62,16 @@ struct Vec3f {
 	Vec3f operator*(Mat4f mat) {
 		Vec3f vec = { };
 
-		vec.x = x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + mat[3][0];
-		vec.y = x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + mat[3][1];
-		vec.z = x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + mat[3][2];
+		vec.x =   x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + mat[3][0];
+		vec.y =   x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + mat[3][1];
+		vec.z =   x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + mat[3][2];
 		float w = x * mat[0][3] + y * mat[1][3] + z * mat[2][3] + mat[3][3];
-
-		vec.x /= w;
-		vec.y /= w;
-		vec.z /= w;
+		
+		if (w != 0) {
+			vec.y /= w;
+			vec.z /= w;
+			vec.x /= w;
+		}
 
 		return vec;
 	}
@@ -187,6 +197,22 @@ Vec3f norm(T vec) {
 	return { vec.x / length, vec.y / length, vec.z / length };
 }
 
+Mat4f projection(float fov, float near, float far) {
+	Mat4f proj = { };
+
+	float s = 1 / tan(fov / 2);
+
+	float c0 = -far / (far - near);
+	float c1 = -(far * near) / (far - near);
+
+	proj.setRow(0, s, 0,  0,  0);
+	proj.setRow(1, 0, s,  0,  0);
+	proj.setRow(2, 0, 0, c0, -1);
+	proj.setRow(3, 0, 0, c1,  0);
+
+	return proj;
+}
+
 Mat4f lookAt(Vec3f from, Vec3f to) {
 	Vec3f forward = norm(from - to);
 	Vec3f right = norm(cross({ 0.0f, 1.0f, 0.0f }, forward));
@@ -275,7 +301,6 @@ void LUPInvert(float A[4][4], int *P, int N, float IA[4][4]) {
 		}
 	}
 }
-
 
 Mat4f inverse(Mat4f &mat) {
 	Mat4f inverted = { };
