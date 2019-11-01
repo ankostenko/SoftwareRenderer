@@ -1,12 +1,14 @@
 #pragma once
 
 extern bool globalRunning;
+extern bool globalPause;
 
 #include <windows.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #undef max
 #undef min
+#include "Image.h"
 
 void *buffer_memory;
 int buffer_width;
@@ -41,14 +43,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 	}
 }
 
-HWND Win32Init(int width, int height) {
+HWND Win32CreateWindow(int width, int height, const char *name) {
 	WNDCLASS wc = { };
 
 	wc.lpfnWndProc = WindowProc;
 	wc.lpszClassName = "Sample Window Class";
 
 	RegisterClass(&wc);
-	HWND hwnd = CreateWindowEx(0, wc.lpszClassName, "3D Renderer", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+	HWND hwnd = CreateWindowEx(0, wc.lpszClassName, name, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 							   CW_USEDEFAULT, CW_USEDEFAULT, width + 16, height + 39, NULL, NULL, NULL, NULL);
 
 	if (hwnd == NULL) {
@@ -56,6 +58,12 @@ HWND Win32Init(int width, int height) {
 	}
 
 	return hwnd;
+}
+
+void Win32DrawToWindow(HWND &window, Image &image) {
+	HDC hdc = GetDC(window);
+	image.flip_vertically();
+	StretchDIBits(hdc, 0, 0, image.width, image.height, 0, 0, image.width, image.height, image.data, &buffer_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
 }
 
 #define S_BUTTON 0x53
@@ -70,6 +78,7 @@ HWND Win32Init(int width, int height) {
 #define K_BUTTON 0x4B
 #define X_BUTTON 0x58
 #define Z_BUTTON 0x5A
+#define P_BUTTON 0x50
 void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &cameraAngleTheta, float &cameraAnglePhi, float &scaleVariable) {
 	MSG msg;
 
@@ -104,25 +113,25 @@ void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &camera
 					if (anglePhi < -M_PI / 2) {
 						anglePhi = -M_PI / 2;
 					}
-				} else if (vkCode == L_BUTTON) {
+				} else if (vkCode == J_BUTTON) {
 					cameraAngleTheta += M_PI / 16;
 					if (cameraAngleTheta > 2 * M_PI) {
 						cameraAngleTheta = 0;
 					}
-				} else if (vkCode == J_BUTTON) {
+				} else if (vkCode == L_BUTTON) {
 					cameraAngleTheta -= M_PI / 16;
 					if (cameraAngleTheta < 0) {
 						cameraAngleTheta = 2 * M_PI;
 					}
 				} else if (vkCode == I_BUTTON) {
 					cameraAnglePhi += M_PI / 16;
-					if (cameraAngleTheta > 2 * M_PI) {
+					if (cameraAngleTheta > M_PI) {
 						cameraAngleTheta = 0;
 					}
 				} else if (vkCode == K_BUTTON) {
 					cameraAnglePhi -= M_PI / 16;
 					if (cameraAngleTheta < 0) {
-						cameraAngleTheta = 2 * M_PI;
+						cameraAngleTheta = M_PI;
 					}
 				} else if (vkCode == VK_ESCAPE) {
 					globalRunning = !globalRunning;
@@ -130,8 +139,9 @@ void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &camera
 					scaleVariable *= 1.2f;
 				} else if (vkCode == Z_BUTTON) {
 					scaleVariable /= 1.2f;
+				} else if (vkCode == P_BUTTON) {
+					globalPause = !globalPause;
 				}
-
 			}
 		} break;
 
