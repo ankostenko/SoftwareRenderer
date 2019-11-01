@@ -31,7 +31,6 @@ void loadModel(Model &model, const char *pathname) {
 	}
 		
 	std::string line, key, x, y, z, uvX, uvY, uvZ;
-	char garbage;
 	while (!file.eof()) {
 		std::getline(file, line);
 		std::istringstream iss(line);
@@ -81,6 +80,11 @@ void loadTexture(Image &tex, const char *pathname) {
 	int width, height, nCh;
 
 	unsigned char *data = stbi_load(pathname, &width, &height, &nCh, 0);
+
+	if (!data) {
+		printf("Couldn't find a texture %s\n", pathname);
+		return;
+	}
 
 	tex.width = width;
 	tex.height = height;

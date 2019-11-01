@@ -27,14 +27,18 @@ public:
 		memmove(&data[(x + y * width) * bytepp], color.rgba, bytepp);
 	}
 
-	Color get(int x, int y) {
+	Color get(float u, float v) {
 		Color color(0, 0, 0);
+
+		int x = roundf(u * width);
+		int y = roundf(v * height);
 
 		if (x < 0 || y < 0 || x >= width || y >= height) {
 			return color;
 		}
 
 		memmove(color.rgba, &data[(x + y * width) * bytepp], bytepp);
+		
 		return color;
 	}
 

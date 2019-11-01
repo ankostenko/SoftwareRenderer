@@ -80,8 +80,16 @@ struct Vec3f {
 		return { vec.x * x + vec.y * y + vec.z * z };
 	}
 
+	Vec3f operator*(float scalar) {
+		return { x * scalar, y * scalar, z * scalar };
+	}
+
 	Vec3f operator+(Vec3f b) {
 		return { x + b.x, y + b.y, z + b.z };
+	}
+
+	Vec3f operator+(float p) {
+		return { x + p, y + p, z + p };
 	}
 
 	Vec3f operator-(Vec3f b) {
