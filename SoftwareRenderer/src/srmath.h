@@ -54,7 +54,6 @@ struct Vec3f {
 		float r[3];
 	};
 
-	// If it doesn't have any cost I let it be
 	float operator[](int i) {
 		return r[i];
 	}
@@ -77,23 +76,23 @@ struct Vec3f {
 	}
 
 	float operator*(Vec3f vec) {
-		return { vec.x * x + vec.y * y + vec.z * z };
+		return vec.x * x + vec.y * y + vec.z * z;
 	}
 
 	Vec3f operator*(float scalar) {
-		return { x * scalar, y * scalar, z * scalar };
+		return Vec3f({ x * scalar, y * scalar, z * scalar });
 	}
 
 	Vec3f operator+(Vec3f b) {
-		return { x + b.x, y + b.y, z + b.z };
+		return Vec3f({ x + b.x, y + b.y, z + b.z });
 	}
 
 	Vec3f operator+(float p) {
-		return { x + p, y + p, z + p };
+		return Vec3f({ x + p, y + p, z + p });
 	}
 
 	Vec3f operator-(Vec3f b) {
-		return { x - b.x, y - b.y, z - b.z };
+		return Vec3f({ x - b.x, y - b.y, z - b.z });
 	}
 
 	void normalize() {
@@ -111,7 +110,6 @@ struct Vec3i {
 		int r[3];
 	};
 
-	// If it doesn't have any cost I let it be
 	int operator[](int i) {
 		return r[i];
 	}
@@ -217,6 +215,28 @@ Mat4f projection(float fov, float near, float far) {
 	proj.setRow(1, 0, s,  0,  0);
 	proj.setRow(2, 0, 0, c0, -1);
 	proj.setRow(3, 0, 0, c1,  0);
+
+	return proj;
+}
+
+Mat4f projection(float focal, float aspect, float near, float far) {
+
+	float a = 1.0f;
+	float b = aspect;
+	float c = focal;
+
+	float n = near;
+	float f = far;
+
+	float d = (n + f) / (n - f);
+	float e = (2 * f * n) / (n - f);
+
+	Mat4f proj = { };
+
+	proj.setRow(0, a * c,		0, 0,	 0);
+	proj.setRow(1, 0,		b * c, 0,	 0);
+	proj.setRow(2, 0,			0, d,	-1);
+	proj.setRow(3, 0,			0, e,	 0);
 
 	return proj;
 }
