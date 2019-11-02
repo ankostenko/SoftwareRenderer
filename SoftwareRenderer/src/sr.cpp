@@ -27,7 +27,7 @@ Color blue(255, 0, 0);
 Color magenta(255, 0, 255);
 Color peach(185, 218, 255);
 
-int imageWidth =  1300;
+int imageWidth =  1600;
 int imageHeight = 900;
 
 // Camera features 
@@ -37,11 +37,13 @@ float nearClippingPlane = 0.1f;
 float farClippingPlane = 1000.0f;
 float fov = M_PI / 3;
 
-void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
+void drawLine(Vec3f p1, Vec3f p2, float *zbuffer, Image &buffer, Color &color) {
 	float x1 = p1.x;
 	float y1 = p1.y;
 	float x2 = p2.x;
 	float y2 = p2.y;
+	p1.z = 1 / p1.z;
+	p2.z = 1 / p2.z;
 
 	bool steep = false;
 	if (std::abs(x1 - x2) < std::abs(y1 - y2)) {
@@ -53,6 +55,7 @@ void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
 	if (x1 > x2) {
 		std::swap(x1, x2);
 		std::swap(y1, y2);
+		std::swap(p1.z, p2.z);
 	}
 
 	int dx = x2 - x1;
@@ -62,10 +65,22 @@ void drawLine(Vec3f p1, Vec3f p2, Image &buffer, Color &color) {
 	int y = y1;
 
 	for (int x = x1; x <= x2; x++) {
+		float t = (x - x1) / (x2 - x1);
+		float z = 1 / ((1 - t) * (p1.z) + t * (p2.z));
 		if (steep) {
+			if (x >= 0 && y >= 0 && y < buffer.width && x < buffer.height) {
+				if (z < zbuffer[y + x * buffer.width]) {
+					zbuffer[y + x * buffer.width] = z;
+				}
+			}
 			buffer.set(y, x, color);
 		}
 		else {
+			if (x >= 0 && y >= 0 && x < buffer.width && y < buffer.height) {
+				if (z < zbuffer[x + y * buffer.width]) {
+					zbuffer[x + y * buffer.width] = z;
+				}
+			}
 			buffer.set(x, y, color);
 		}
 		error2 += derror2;
@@ -114,21 +129,17 @@ float edgeFunction(const Vec3f &a, const Vec3f &b, const Vec3f &c) {
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-
-// DEBUG
-int debugFace;
-Vec3f debugTriVert[3];
-// =====
-
+#define DEBUG_HAS_TEXTURE 0
 void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer, float *zbuffer) {
 	triVert[0].z = 1 / triVert[0].z;
 	triVert[1].z = 1 / triVert[1].z;
 	triVert[2].z = 1 / triVert[2].z;
-	
+
+#if DEBUG_HAS_TEXTURE
 	uv[0] = uv[0] * triVert[0].z;
 	uv[1] = uv[1] * triVert[1].z;
 	uv[2] = uv[2] * triVert[2].z;
-
+#endif
 	// Find "border" box
 	int minX = triVert[0].x;
 	int minY = triVert[0].y;
@@ -164,7 +175,6 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 		return;
 	}
 
-#define DEBUG_HAS_TEXTURE 1
 	for (int y = minY; y <= maxY; y++) {
 		for (int x = minX; x <= maxX; x++) {
 			Vec3f p = { x, y, 0 };
@@ -178,9 +188,8 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 				w0 /= area;
 				w1 /= area;
 				w2 /= area;
-
-				float oneOverZ = triVert[0].z * w0 + triVert[1].z * w1 + triVert[2].z * w2;
-				float z = 1 / oneOverZ;
+				
+				float z = 1 / (triVert[0].z * w0 + triVert[1].z * w1 + triVert[2].z * w2);
 
 				// Clipping
 				if (x >= imagebuffer.width || x < 0 || y >= imagebuffer.height || y < 0) {
@@ -189,6 +198,9 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 
 				if (z < zbuffer[x + y * imagebuffer.width]) {
 					zbuffer[x + y * imagebuffer.width] = z;
+					// TODO: Investigate what the hell is going on with texture mapping
+					// Texture mapping is working only after transformations done by MeshLab
+					// It outputs completely different mapping and it does something but I'm not sure what
 #if DEBUG_HAS_TEXTURE
 					Vec3f uvC = uv[0] * w0 + uv[1] * w1 + uv[2] * w2;
 					uvC = uvC * z;
@@ -210,7 +222,8 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 }
 
 int main(int argc, char **argv) {
-	loadModel(model, ".\\models\\new_african_head.obj");
+	Model secondModel;
+	loadModel(model, ".\\models\\african_head.obj");
 	loadTexture(texture, ".\\models\\african_head_diffuse.jpg");
 
 	texture.flip_vertically();
@@ -241,9 +254,13 @@ int main(int argc, char **argv) {
 
 	float *zbuffer = new float[image.width * image.height];
 
+	Mat4f proj = projection(fov, image.width / (float)image.height, nearClippingPlane, farClippingPlane);
+
 	while (globalRunning) {
 		if (fpsLock.milliElapsed() > 16.0f) {
 			fpsLock.ResetStartTime();
+			
+			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi, scaleVariable);
 
 			for (int i = 0; i < image.width * image.height; i++) {
 				zbuffer[i] = farClippingPlane;
@@ -254,17 +271,17 @@ int main(int argc, char **argv) {
 				memmove(&image.data[i], peach.rgba, image.bytepp);
 			}
 
-			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi, scaleVariable);
-
 			// Camera
 			Vec3f tCamera = camera * translate(0.0f, 0.0f, 1.5f) * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
 			Mat4f view = lookAt(tCamera, origin);
 			view = inverse(view);
 
-			Vec3f rX = X * view * projection(fov, nearClippingPlane, farClippingPlane);
-			Vec3f rY = Y * view * projection(fov, nearClippingPlane, farClippingPlane);
-			Vec3f rZ = Z * view * projection(fov, nearClippingPlane, farClippingPlane);
-			Vec3f rOrigin = origin * view * projection(fov, nearClippingPlane, farClippingPlane);
+			Vec3f rX = X * view * proj;
+			Vec3f rY = Y * view * proj;
+			Vec3f rZ = Z * view * proj;
+			Vec3f rOrigin = origin * view * proj;
+
+
 
 			// Viewport transform
 			rX.x = (rX.x + 1.0f) * 0.5f * image.width;
@@ -275,22 +292,20 @@ int main(int argc, char **argv) {
 			rZ.y = (1.0f - (rZ.y + 1.0f) * 0.5) * image.height;
 			rOrigin.x = (rOrigin.x + 1.0f) * 0.5f * image.width;
 			rOrigin.y = (1.0f - (rOrigin.y + 1.0f) * 0.5) * image.height;
-
-			drawLine(rOrigin, rX, image, red);
-			drawLine(rOrigin, rY, image, green);
-			drawLine(rOrigin, rZ, image, blue);
+			
+			drawLine(rOrigin, rX, zbuffer, image, red);
+			drawLine(rOrigin, rY, zbuffer, image, green);
+			drawLine(rOrigin, rZ, zbuffer, image, blue);
 
 			for (int i = 0; i < model.facesNumber(); i++) {
-				debugFace = i;
 				Vec3f triVert[3];
 				Vec3f rTriVert[3];
 				Vec3f textureUV[3];
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
-					debugTriVert[j] = triVert[j];
 					textureUV[j] = model.triUV(i, j);
-					triVert[j] = triVert[j] * scale(scaleVariable) * rotationXY(angleTheta, anglePhi);
-					rTriVert[j] = triVert[j] * view * projection(fov, nearClippingPlane, farClippingPlane);
+					triVert[j] = triVert[j] * scale(scaleVariable / 2) * rotationXY(angleTheta, anglePhi);
+					rTriVert[j] = triVert[j] * view * proj;
 					if (rTriVert[j].x < -1.0f || rTriVert[j].x > 1.0f || rTriVert[j].y < -1.0f || rTriVert[j].y > 1.0f) {
 						continue;
 					}
@@ -301,20 +316,22 @@ int main(int argc, char **argv) {
 				
 				rasterize(rTriVert, triVert, textureUV, image, zbuffer);
 			}
+
 			Win32DrawToWindow(window, image);
 			
 			char buffer[64];
-
 			wsprintf(buffer, "%d ms\n", (int)fpsLock.milliElapsed());
 			OutputDebugStringA(buffer);
-
 		}
+
+		//int *intzbuffer = new int[image.width * image.height];
+		//
+		//for (int i = 0; i < image.width * image.height; i++) {
+		//	intzbuffer[i] = (int((zbuffer[i] / 1000)) * 255) << 8;
+		//}
+		//
+		//stbi_write_jpg("zbuffer.jpg", image.width, image.height, 4, intzbuffer, 100);
 	}
-
-	// image.flip_vertically();
-	// stbi_write_png("output.png", imageWidth, imageHeight, image.bytepp, image.data, imageWidth * image.bytepp);
-
-	//system("pause");
 
 	return 0;
 }
