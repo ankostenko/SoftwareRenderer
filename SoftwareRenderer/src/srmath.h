@@ -238,6 +238,11 @@ Mat4f projection(float fov, float aspect, float near, float far) {
 	return proj;
 }
 
+void viewport(Vec3f &clipVert, float width, float height) {
+	clipVert.x = roundf((clipVert.x + 1.0f) * 0.5f * width);
+	clipVert.y = roundf((1.0f - (clipVert.y + 1.0f)  * 0.5f) * height);
+}
+
 Mat4f lookAt(Vec3f from, Vec3f to) {
 	Vec3f forward = norm(from - to);
 	Vec3f right = norm(cross({ 0.0f, 1.0f, 0.0f }, forward));

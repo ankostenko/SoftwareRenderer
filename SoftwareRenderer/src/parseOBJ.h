@@ -21,6 +21,25 @@ Vec3i splitVertAndUv(std::string &str) {
 	return { vert - 1, vn - 1, vt - 1 };
 }
 
+void normalizeModelCoords(Model &model) {
+	float length = 0;
+	for (int i = 0; i < model.vertices.size(); i++) {
+		Vec3f vert = model.vertices.data()[i];
+
+		float newLength = sqrt(vert.x * vert.x + vert.y * vert.y + vert.z * vert.z);
+		if (newLength > length) {
+			length = newLength;
+		}
+	}
+
+	for (int i = 0; i < model.vertices.size(); i++) {
+		Vec3f *vert = &model.vertices.data()[i];
+		vert->x /= length;
+		vert->y /= length;
+		vert->z /= length;
+	}
+}
+
 void loadModel(Model &model, const char *pathname) {
 	std::ifstream file;
 	file.open(pathname);
@@ -90,5 +109,4 @@ void loadTexture(Image &tex, const char *pathname) {
 	tex.height = height;
 	tex.bytepp = nCh;
 	tex.data = data;
-	//stbi_image_free(data);
 }
