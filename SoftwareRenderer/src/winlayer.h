@@ -125,13 +125,13 @@ void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &camera
 					}
 				} else if (vkCode == I_BUTTON) {
 					cameraAnglePhi += M_PI / 16;
-					if (cameraAngleTheta > M_PI) {
+					if (cameraAngleTheta > 2 * M_PI) {
 						cameraAngleTheta = 0;
 					}
 				} else if (vkCode == K_BUTTON) {
 					cameraAnglePhi -= M_PI / 16;
 					if (cameraAngleTheta < 0) {
-						cameraAngleTheta = M_PI;
+						cameraAngleTheta = 2 * M_PI;
 					}
 				} else if (vkCode == VK_ESCAPE) {
 					globalRunning = !globalRunning;

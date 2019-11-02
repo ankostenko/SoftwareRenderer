@@ -219,24 +219,21 @@ Mat4f projection(float fov, float near, float far) {
 	return proj;
 }
 
-Mat4f projection(float focal, float aspect, float near, float far) {
-
-	float a = 1.0f;
-	float b = aspect;
-	float c = focal;
+Mat4f projection(float fov, float aspect, float near, float far) {
 
 	float n = near;
 	float f = far;
 
-	float d = (n + f) / (n - f);
-	float e = (2 * f * n) / (n - f);
+	float t = tan(fov / 2) * near;
+	float b = -t;
+	float r = t * aspect;
+	float l = -r;
 
 	Mat4f proj = { };
-
-	proj.setRow(0, a * c,		0, 0,	 0);
-	proj.setRow(1, 0,		b * c, 0,	 0);
-	proj.setRow(2, 0,			0, d,	-1);
-	proj.setRow(3, 0,			0, e,	 0);
+	proj.setRow(0,	(2 * n) / (r - l),					0,						 0,		 0);
+	proj.setRow(1,					0,	(2 * n) / (t - b),						 0,		 0);
+	proj.setRow(2,	(r + l) / (r - l),	(t + b) / (t - b),		-(f + n) / (f - n),		-1);
+	proj.setRow(3,					0,					0,	-(2 * f * n) / (f - n),		 0);
 
 	return proj;
 }
