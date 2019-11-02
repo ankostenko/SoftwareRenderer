@@ -111,10 +111,7 @@ bool pixelCoord(Mat4f &view, Vec3f pWorld, float right, float top, int imageWidt
 }
 
 float edgeFunction(const Vec3f &a, const Vec3f &b, const Vec3f &c) {
-	Vec3i ai = { int(a.x), int(a.y), int(a.z) };
-	Vec3i bi = { int(b.x), int(b.y), int(b.z) };
-	Vec3i ci = { int(c.x), int(c.y), int(c.z) };
-	return (ci.x - ai.x) * (bi.y - ai.y) - (ci.y - ai.y) * (bi.x - ai.x);
+	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
 
@@ -127,7 +124,7 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 	triVert[0].z = 1 / triVert[0].z;
 	triVert[1].z = 1 / triVert[1].z;
 	triVert[2].z = 1 / triVert[2].z;
-	//
+	
 	uv[0] = uv[0] * triVert[0].z;
 	uv[1] = uv[1] * triVert[1].z;
 	uv[2] = uv[2] * triVert[2].z;
@@ -168,9 +165,9 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 	}
 
 #define DEBUG_HAS_TEXTURE 1
-	Vec3f p;
-	for (p.y = minY; p.y < maxY; p.y++) {
-		for (p.x = minX; p.x < maxX; p.x++) {
+	for (int y = minY; y <= maxY; y++) {
+		for (int x = minX; x <= maxX; x++) {
+			Vec3f p = { x, y, 0 };
 			// Determine whether point inside the triangle or not
 			float w0 = edgeFunction(triVert[1], triVert[2], p);
 			float w1 = edgeFunction(triVert[2], triVert[0], p);
@@ -183,9 +180,6 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 				w2 /= area;
 
 				float oneOverZ = triVert[0].z * w0 + triVert[1].z * w1 + triVert[2].z * w2;
-
-				int x = roundf((p.x * w0) + (p.x * w1) + (p.x * w2));
-				int y = roundf((p.y * w0) + (p.y * w1) + (p.y * w2));
 				float z = 1 / oneOverZ;
 
 				// Clipping
@@ -196,18 +190,14 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 				if (z < zbuffer[x + y * imagebuffer.width]) {
 					zbuffer[x + y * imagebuffer.width] = z;
 #if DEBUG_HAS_TEXTURE
-					//float uvX = uv[0].x * w0 + uv[1].x * w1 + uv[2].x * w2;
-					//float uvY = uv[0].y * w0 + uv[1].y * w1 + uv[2].y * w2;
-					//uvX *= z;
-					//uvX *= z;
-					//
-					//Color color = texture.get(uvX, uvY);
-
 					Vec3f uvC = uv[0] * w0 + uv[1] * w1 + uv[2] * w2;
 					uvC = uvC * z;
-
 					Color color = texture.get(uvC.x, uvC.y);
+					
 					color.swapRBChannels();
+					color.r *= intensity;
+					color.g *= intensity;
+					color.b *= intensity;
 #else
 					Color color(white.r * intensity, white.g * intensity, white.b * intensity);
 #endif
@@ -220,7 +210,7 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 }
 
 int main(int argc, char **argv) {
-	loadModel(model, ".\\models\\african_head.obj");
+	loadModel(model, ".\\models\\new_african_head.obj");
 	loadTexture(texture, ".\\models\\african_head_diffuse.jpg");
 
 	texture.flip_vertically();
@@ -276,6 +266,7 @@ int main(int argc, char **argv) {
 			Vec3f rZ = Z * view * projection(fov, nearClippingPlane, farClippingPlane);
 			Vec3f rOrigin = origin * view * projection(fov, nearClippingPlane, farClippingPlane);
 
+			// Viewport transform
 			rX.x = (rX.x + 1.0f) * 0.5f * image.width;
 			rX.y = (1.0f - (rX.y + 1.0f) * 0.5) * image.height;
 			rY.x = (rY.x + 1.0f) * 0.5f * image.width;
@@ -303,11 +294,11 @@ int main(int argc, char **argv) {
 					if (rTriVert[j].x < -1.0f || rTriVert[j].x > 1.0f || rTriVert[j].y < -1.0f || rTriVert[j].y > 1.0f) {
 						continue;
 					}
+					// Viewport transform
 					rTriVert[j].x = roundf((rTriVert[j].x + 1.0f) * 0.5f * image.width);
 					rTriVert[j].y = roundf((1.0f - (rTriVert[j].y + 1.0f)  * 0.5f) * image.height);
 				}
 				
-				//rasterize(rTriVert, triVert, textureUV, image, zbuffer);
 				rasterize(rTriVert, triVert, textureUV, image, zbuffer);
 			}
 			Win32DrawToWindow(window, image);
