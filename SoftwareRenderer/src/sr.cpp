@@ -222,10 +222,10 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Vec3f *uv, Image &imagebuffer,
 }
 
 int main(int argc, char **argv) {
-	Model secondModel;
-	loadModel(model, ".\\models\\african_head.obj");
-	loadTexture(texture, ".\\models\\african_head_diffuse.jpg");
+	loadModel(model, "models\\african_head.obj");
+	normalizeModelCoords(model);
 
+	loadTexture(texture, "models\\african_head_diffuse.jpg");
 	texture.flip_vertically();
 
 	Image image(imageWidth, imageHeight);
@@ -242,7 +242,7 @@ int main(int argc, char **argv) {
 	float anglePhi = 0;
 	float cameraAngleTheta = 0;
 	float cameraAnglePhi = 0;
-	float scaleVariable = 0.5f;
+	float scaleVariable = 1.0f;
 
 	Timer fpsLock;
 
@@ -281,17 +281,11 @@ int main(int argc, char **argv) {
 			Vec3f rZ = Z * view * proj;
 			Vec3f rOrigin = origin * view * proj;
 
-
-
 			// Viewport transform
-			rX.x = (rX.x + 1.0f) * 0.5f * image.width;
-			rX.y = (1.0f - (rX.y + 1.0f) * 0.5) * image.height;
-			rY.x = (rY.x + 1.0f) * 0.5f * image.width;
-			rY.y = (1.0f - (rY.y + 1.0f) * 0.5) * image.height;
-			rZ.x = (rZ.x + 1.0f) * 0.5f * image.width;
-			rZ.y = (1.0f - (rZ.y + 1.0f) * 0.5) * image.height;
-			rOrigin.x = (rOrigin.x + 1.0f) * 0.5f * image.width;
-			rOrigin.y = (1.0f - (rOrigin.y + 1.0f) * 0.5) * image.height;
+			viewport(rX, image.width, image.height);
+			viewport(rY, image.width, image.height);
+			viewport(rZ, image.width, image.height);
+			viewport(rOrigin, image.width, image.height);
 			
 			drawLine(rOrigin, rX, zbuffer, image, red);
 			drawLine(rOrigin, rY, zbuffer, image, green);
@@ -309,9 +303,7 @@ int main(int argc, char **argv) {
 					if (rTriVert[j].x < -1.0f || rTriVert[j].x > 1.0f || rTriVert[j].y < -1.0f || rTriVert[j].y > 1.0f) {
 						continue;
 					}
-					// Viewport transform
-					rTriVert[j].x = roundf((rTriVert[j].x + 1.0f) * 0.5f * image.width);
-					rTriVert[j].y = roundf((1.0f - (rTriVert[j].y + 1.0f)  * 0.5f) * image.height);
+					viewport(rTriVert[j], image.width, image.height);
 				}
 				
 				rasterize(rTriVert, triVert, textureUV, image, zbuffer);
@@ -323,14 +315,6 @@ int main(int argc, char **argv) {
 			wsprintf(buffer, "%d ms\n", (int)fpsLock.milliElapsed());
 			OutputDebugStringA(buffer);
 		}
-
-		//int *intzbuffer = new int[image.width * image.height];
-		//
-		//for (int i = 0; i < image.width * image.height; i++) {
-		//	intzbuffer[i] = (int((zbuffer[i] / 1000)) * 255) << 8;
-		//}
-		//
-		//stbi_write_jpg("zbuffer.jpg", image.width, image.height, 4, intzbuffer, 100);
 	}
 
 	return 0;
