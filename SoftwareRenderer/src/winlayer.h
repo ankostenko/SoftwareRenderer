@@ -3,12 +3,8 @@
 extern bool globalRunning;
 extern bool globalPause;
 
-#include <windows.h>
-#define _USE_MATH_DEFINES
-#include <math.h>
 #undef max
 #undef min
-#include "Image.h"
 
 void *buffer_memory;
 int buffer_width;
@@ -41,6 +37,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 			return DefWindowProc(hwnd, uMsg, wParam, lParam);
 		}
 	}
+	return 0;
 }
 
 HWND Win32CreateWindow(int width, int height, const char *name) {
@@ -60,10 +57,9 @@ HWND Win32CreateWindow(int width, int height, const char *name) {
 	return hwnd;
 }
 
-void Win32DrawToWindow(HWND &window, Image &image) {
+void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 	HDC hdc = GetDC(window);
-	image.flip_vertically();
-	StretchDIBits(hdc, 0, 0, image.width, image.height, 0, 0, image.width, image.height, image.data, &buffer_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
+	StretchDIBits(hdc, 0, 0, width, height, 0, 0, width, height, image, &buffer_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
 }
 
 #define S_BUTTON 0x53

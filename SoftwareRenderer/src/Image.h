@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Color.h"
-
 struct Image {
 public:
 	enum BytePerPixel {
@@ -56,3 +54,15 @@ public:
 		delete temp;
 	}
 };
+
+struct Texture {
+	Image texture;
+};
+
+Color black(0, 0, 0);
+Color white(255, 255, 255);
+Color red(0, 0, 255);
+Color green(0, 255, 0);
+Color blue(255, 0, 0);
+Color magenta(255, 0, 255);
+Color peach(185, 218, 255);

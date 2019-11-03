@@ -1,8 +1,5 @@
 #pragma once
 
-#include <assert.h>
-#include <math.h>
-
 template<int row, int col, typename T>
 struct Matrix {
 	T mat[row][col];
@@ -203,13 +200,13 @@ Vec3f norm(T vec) {
 	return { vec.x / length, vec.y / length, vec.z / length };
 }
 
-Mat4f projection(float fov, float near, float far) {
+Mat4f projection(float fov, float nearPlane, float farPlane) {
 	Mat4f proj = { };
 
 	float s = 1 / tan(fov / 2);
 
-	float c0 = -far / (far - near);
-	float c1 = -(far * near) / (far - near);
+	float c0 = -farPlane / (farPlane - nearPlane);
+	float c1 = -(farPlane * nearPlane) / (farPlane - nearPlane);
 
 	proj.setRow(0, s, 0,  0,  0);
 	proj.setRow(1, 0, s,  0,  0);
@@ -219,12 +216,12 @@ Mat4f projection(float fov, float near, float far) {
 	return proj;
 }
 
-Mat4f projection(float fov, float aspect, float near, float far) {
+Mat4f projection(float fov, float aspect, float nearPlane, float farPlane) {
 
-	float n = near;
-	float f = far;
+	float n = nearPlane;
+	float f = farPlane;
 
-	float t = tan(fov / 2) * near;
+	float t = tan(fov / 2) * nearPlane;
 	float b = -t;
 	float r = t * aspect;
 	float l = -r;
