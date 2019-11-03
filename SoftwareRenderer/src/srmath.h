@@ -235,6 +235,25 @@ Mat4f projection(float fov, float aspect, float nearPlane, float farPlane) {
 	return proj;
 }
 
+Mat4f orthoProjection(float fov, float aspect, float nearPlane, float farPlane) {
+	float n = nearPlane;
+	float f = farPlane;
+
+	float t = tan(fov / 2) * n;
+	float b = -t;
+	float r = t * aspect;
+	float l = -r;
+
+	Mat4f proj = {  };
+
+	proj.setRow(0,	2 / (r - l),		   0,			 0, -(r + l) / (r - l));
+	proj.setRow(1,			  0, 2 / (t - b),			 0, -(t + b) / (t - b));
+	proj.setRow(2,			  0,		   0, -2 / (f - n), -(f + n) / (f - n));
+	proj.setRow(3,			  0,		   0,			 0,					 1);
+
+	return proj;
+}
+
 void viewport(Vec3f &clipVert, float width, float height) {
 	clipVert.x = roundf((clipVert.x + 1.0f) * 0.5f * width);
 	clipVert.y = roundf((1.0f - (clipVert.y + 1.0f)  * 0.5f) * height);

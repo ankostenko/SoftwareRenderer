@@ -1,4 +1,4 @@
-void drawLine(Vec3f p1, Vec3f p2, float *zbuffer, Color &color) {
+void drawLine(Vec3f p1, Vec3f p2, Color &color) {
 	viewport(p1, render.imagebuffer.width, render.imagebuffer.height);
 	viewport(p2, render.imagebuffer.width, render.imagebuffer.height);
 
@@ -33,16 +33,16 @@ void drawLine(Vec3f p1, Vec3f p2, float *zbuffer, Color &color) {
 		float z = 1 / ((1 - t) * (p1.z) + t * (p2.z));
 		if (steep) {
 			if (x >= 0 && y >= 0 && y < render.imagebuffer.width && x < render.imagebuffer.height) {
-				if (z < zbuffer[y + x * render.imagebuffer.width]) {
-					zbuffer[y + x * render.imagebuffer.width] = z;
+				if (z < render.zbuffer[y + x * render.imagebuffer.width]) {
+					render.zbuffer[y + x * render.imagebuffer.width] = z;
 				}
 			}
 			render.imagebuffer.set(y, x, color);
 		}
 		else {
 			if (x >= 0 && y >= 0 && x < render.imagebuffer.width && y < render.imagebuffer.height) {
-				if (z < zbuffer[x + y * render.imagebuffer.width]) {
-					zbuffer[x + y * render.imagebuffer.width] = z;
+				if (z < render.zbuffer[x + y * render.imagebuffer.width]) {
+					render.zbuffer[x + y * render.imagebuffer.width] = z;
 				}
 			}
 			render.imagebuffer.set(x, y, color);
@@ -59,7 +59,7 @@ float edgeFunction(const Vec3f &a, const Vec3f &b, const Vec3f &c) {
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-#define DEBUG_HAS_TEXTURE 1
+#define DEBUG_HAS_TEXTURE 0
 void rasterize(Vec3f *triVert, Vec3f *globalVert, Texture texture, Vec3f *uv) {
 	triVert[0].z = 1 / triVert[0].z;
 	triVert[1].z = 1 / triVert[1].z;
