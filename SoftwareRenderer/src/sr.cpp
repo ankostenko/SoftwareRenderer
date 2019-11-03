@@ -23,8 +23,8 @@ bool globalRunning = true;
 bool globalPause = false;
 
 Model model;
-PerspectiveCamera camera(0.1f, 1000.0f, (float)M_PI / 3);
-//OrthographicCamera camera(0.1, 1000.0f, (float)M_PI / 3);
+//PerspectiveCamera camera(0.1f, 1000.0f, (float)M_PI / 3);
+OrthographicCamera camera(0.1, 1000.0f, (float)M_PI / 3);
 
 int imageWidth =  1600;
 int imageHeight = 900;

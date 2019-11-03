@@ -246,10 +246,10 @@ Mat4f orthoProjection(float fov, float aspect, float nearPlane, float farPlane) 
 
 	Mat4f proj = {  };
 
-	proj.setRow(0,	2 / (r - l),		   0,			 0, -(r + l) / (r - l));
-	proj.setRow(1,			  0, 2 / (t - b),			 0, -(t + b) / (t - b));
-	proj.setRow(2,			  0,		   0, -2 / (f - n), -(f + n) / (f - n));
-	proj.setRow(3,			  0,		   0,			 0,					 1);
+	proj.setRow(0,		  2 / (r - l),		 			0,					0, 0);
+	proj.setRow(1,					0,		  2 / (t - b),					0, 0);
+	proj.setRow(2,					0,		 			0,		 -2 / (f - n), 0);
+	proj.setRow(3, -(r + l) / (r - l), -(t + b) / (t - b), -(f + n) / (f - n), 1);
 
 	return proj;
 }
