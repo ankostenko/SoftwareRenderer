@@ -34,7 +34,9 @@ struct Matrix {
 		Matrix ret = { };
 		for (int r = 0; r < row; r++) {
 			for (int c = 0; c < col; c++) {
-				ret[r][c] = mat[r][c] * B[c][r];
+				for (int k = 0; k < row; k++) {
+					ret[r][c] += mat[r][k] * B[k][c];
+				}
 			}
 		}
 		return ret;
@@ -144,31 +146,42 @@ Mat4f translate(float x, float y, float z) {
 Mat4f rotationY(float angle) {
 	Mat4f mat = identity();
 
-	float values0[4] = {  cos(angle),	0,	sin(angle),	0 };
-	float values1[4] = {		   0,	1,			 0,	0 };
-	float values2[4] = { -sin(angle),	0,	cos(angle), 0 };
-	float values3[4] = {		   0,	0,			 0,	1 };
+	//float values0[4] = {  cos(angle),	0,	sin(angle),	0 };
+	//float values1[4] = {		   0,	1,			 0,	0 };
+	//float values2[4] = { -sin(angle),	0,	cos(angle), 0 };
+	//float values3[4] = {		   0,	0,			 0,	1 };
+	//
+	//mat.setRow(0, values0);
+	//mat.setRow(1, values1);
+	//mat.setRow(2, values2);
+	//mat.setRow(3, values3);
 
-	mat.setRow(0, values0);
-	mat.setRow(1, values1);
-	mat.setRow(2, values2);
-	mat.setRow(3, values3);
+	mat.setRow(0, cos(angle), 0, -sin(angle), 0);
+	mat.setRow(1, 0, 1, 0, 0);
+	mat.setRow(2, sin(angle), 0,  cos(angle), 0);
+	mat.setRow(3, 0, 0, 0, 1);
 
 	return mat;
 }
 
+// What if this is column-major matrices?
 Mat4f rotationX(float angle) {
 	Mat4f mat = identity();
 
-	float values0[4] = { 1,			 0,			  0,	0 };
-	float values1[4] = { 0,	cos(angle),	-sin(angle),	0 };
-	float values2[4] = { 0,	sin(angle),	 cos(angle),	0 };
-	float values3[4] = { 0,			 0,			  0,	1 };
+	//float values0[4] = { 1,			 0,			  0,	0 };
+	//float values1[4] = { 0,	cos(angle),	-sin(angle),	0 };
+	//float values2[4] = { 0,	sin(angle),	 cos(angle),	0 };
+	//float values3[4] = { 0,			 0,			  0,	1 };
+	//
+	//mat.setRow(0, values0);
+	//mat.setRow(1, values1);
+	//mat.setRow(2, values2);
+	//mat.setRow(3, values3);
 
-	mat.setRow(0, values0);
-	mat.setRow(1, values1);
-	mat.setRow(2, values2);
-	mat.setRow(3, values3);
+	mat.setRow(0, 1,			0,			0, 0);
+	mat.setRow(1, 0,   cos(angle), sin(angle), 0);
+	mat.setRow(2, 0,  -sin(angle), cos(angle), 0);
+	mat.setRow(3, 0,			0,			0, 1);
 
 	return mat;
 }
@@ -176,15 +189,25 @@ Mat4f rotationX(float angle) {
 Mat4f rotationXY(float angleTheta, float anglePhi) {
 	Mat4f mat = identity();
 
-	float values0[4] = { cos(angleTheta),	sin(angleTheta) * sin(anglePhi),	sin(angleTheta) * cos(anglePhi),	0 };
-	float values1[4] = {			   0,					  cos(anglePhi),					 -sin(anglePhi),	0 };
-	float values2[4] = { -sin(angleTheta),	cos(angleTheta) * sin(anglePhi),	cos(angleTheta) * cos(anglePhi),	0 };
-	float values3[4] = {			   0,								  0,								  0,	1 };
+	//float values0[4] = { cos(angleTheta),	sin(angleTheta) * sin(anglePhi),	sin(angleTheta) * cos(anglePhi),	0 };
+	//float values1[4] = {			   0,					  cos(anglePhi),					 -sin(anglePhi),	0 };
+	//float values2[4] = { -sin(angleTheta),	cos(angleTheta) * sin(anglePhi),	cos(angleTheta) * cos(anglePhi),	0 };
+	//float values3[4] = {			   0,								  0,								  0,	1 };
+	//
+	//mat.setRow(0, values0);
+	//mat.setRow(1, values1);
+	//mat.setRow(2, values2);
+	//mat.setRow(3, values3);
 
-	mat.setRow(0, values0);
-	mat.setRow(1, values1);
-	mat.setRow(2, values2);
-	mat.setRow(3, values3);
+	//mat.setRow(0,				  cos(angleTheta),				0,				   sin(angleTheta), 0);
+	//mat.setRow(1, sin(angleTheta) * sin(anglePhi),  cos(anglePhi), cos(angleTheta) * sin(anglePhi), 0);
+	//mat.setRow(2, sin(angleTheta) * cos(anglePhi), -sin(anglePhi), cos(angleTheta) * cos(anglePhi), 0);
+	//mat.setRow(3,								0,				0,								 0, 1);
+
+	mat.setRow(0, cos(angleTheta),					0,							-sin(angleTheta), 0);
+	mat.setRow(1, sin(angleTheta) * sin(anglePhi), cos(anglePhi), cos(angleTheta) * sin(anglePhi), 0);
+	mat.setRow(2, cos(anglePhi) * sin(angleTheta), -sin(anglePhi), cos(angleTheta) * cos(anglePhi), 0);
+	mat.setRow(3, 0, 0, 0, 1);
 
 	return mat;
 }
