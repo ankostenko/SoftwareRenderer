@@ -110,24 +110,24 @@ void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &camera
 						anglePhi = -M_PI / 2;
 					}
 				} else if (vkCode == J_BUTTON) {
-					cameraAngleTheta += M_PI / 16;
-					if (cameraAngleTheta > 2 * M_PI) {
-						cameraAngleTheta = 0;
-					}
-				} else if (vkCode == L_BUTTON) {
 					cameraAngleTheta -= M_PI / 16;
 					if (cameraAngleTheta < 0) {
 						cameraAngleTheta = 2 * M_PI;
 					}
-				} else if (vkCode == I_BUTTON) {
-					cameraAnglePhi += M_PI / 16;
+				} else if (vkCode == L_BUTTON) {
+					cameraAngleTheta += M_PI / 16;
 					if (cameraAngleTheta > 2 * M_PI) {
 						cameraAngleTheta = 0;
 					}
-				} else if (vkCode == K_BUTTON) {
+				} else if (vkCode == I_BUTTON) {
 					cameraAnglePhi -= M_PI / 16;
 					if (cameraAngleTheta < 0) {
 						cameraAngleTheta = 2 * M_PI;
+					}
+				} else if (vkCode == K_BUTTON) {
+					cameraAnglePhi += M_PI / 16;
+					if (cameraAngleTheta > 2 * M_PI) {
+						cameraAngleTheta = 0;
 					}
 				} else if (vkCode == VK_ESCAPE) {
 					globalRunning = !globalRunning;

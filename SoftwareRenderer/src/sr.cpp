@@ -23,8 +23,8 @@ bool globalRunning = true;
 bool globalPause = false;
 
 Model model;
-//PerspectiveCamera camera(0.1f, 1000.0f, (float)M_PI / 3);
-OrthographicCamera camera(0.1, 1000.0f, (float)M_PI / 3);
+PerspectiveCamera camera(0.1f, 1000.0f, (float)M_PI / 3);
+//OrthographicCamera camera(0.1, 1000.0f, (float)M_PI / 3);
 
 int imageWidth =  1600;
 int imageHeight = 900;
@@ -32,7 +32,7 @@ int imageHeight = 900;
 int main(int argc, char **argv) {
 	initRenderer(imageWidth, imageHeight);
 
-	loadModel(model, "models\\cube.obj");
+	loadModel(model, "models\\african_head.obj");
 	normalizeModelCoords(model);
 
 	// TODO: default texture loading
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 				for (int j = 0; j < 3; j++) {
 					triVert[j] = model.triVert(i, j);
 					textureUV[j] = model.triUV(i, j);
-					triVert[j] = triVert[j] * scale(scaleVariable / 2) * rotationXY(angleTheta, anglePhi);
+					triVert[j] = triVert[j] * rotationX(anglePhi) * rotationY(angleTheta) * scale(scaleVariable / 2);
 					rTriVert[j] = triVert[j] * camera.view * camera.project();
 					if (rTriVert[j].x < -1.0f || rTriVert[j].x > 1.0f || rTriVert[j].y < -1.0f || rTriVert[j].y > 1.0f) {
 						continue;
