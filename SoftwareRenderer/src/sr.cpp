@@ -11,6 +11,8 @@
 #include "renderer.h"
 #include "renderer.cpp"
 
+#include "camera.cpp"
+
 #include "load.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -19,21 +21,18 @@
 
 bool globalRunning = true;
 bool globalPause = false;
+
 Model model;
+PerspectiveCamera camera(0.1f, 1000.0f, (float)M_PI / 3);
+//OrthographicCamera camera(0.1, 1000.0f, (float)M_PI / 3);
 
 int imageWidth =  1600;
 int imageHeight = 900;
 
-// Camera features 
-Vec3f camera = { 0.0f, 0.0f, 0.0f };
-float nearClippingPlane = 0.1f;
-float farClippingPlane = 1000.0f;
-float fov = (float)M_PI / 3;
-
 int main(int argc, char **argv) {
 	initRenderer(imageWidth, imageHeight);
 
-	loadModel(model, "models\\new_african_head.obj");
+	loadModel(model, "models\\cube.obj");
 	normalizeModelCoords(model);
 
 	// TODO: default texture loading
@@ -57,30 +56,29 @@ int main(int argc, char **argv) {
 	Vec3f Z = { 0.0f, 0.0f, 1.0f };
 	Vec3f origin = { 0.0f, 0.0f, 0.0f };
 
-	Mat4f proj = projection(fov, render.imagebuffer.width / (float)render.imagebuffer.height, nearClippingPlane, farClippingPlane);
-
 	while (globalRunning) {
 		if (fpsLock.milliElapsed() > 16.0f) {
 			fpsLock.ResetStartTime();
 			
 			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi, scaleVariable);
 
-			clearZBuffer(farClippingPlane);
+			clearZBuffer(camera.farClippingPlane);
 			clearImBuffer(peach);
 
 			// Camera
-			Vec3f tCamera = camera * translate(0.0f, 0.0f, 1.5f) * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
-			Mat4f view = lookAt(tCamera, origin);
-			view = inverse(view);
+			camera.position = camera.staticPosition * translate(0.0f, 0.0f, 1.5f) * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
+			camera.lookAt(origin);
+			// NOTE: it shouldn't be explicit
+			camera.invView();
 
-			Vec3f rX = X * view * proj;
-			Vec3f rY = Y * view * proj;
-			Vec3f rZ = Z * view * proj;
-			Vec3f rOrigin = origin * view * proj;
+			Vec3f rX = X * camera.view * camera.project();
+			Vec3f rY = Y * camera.view * camera.project();
+			Vec3f rZ = Z * camera.view * camera.project();
+			Vec3f rOrigin = origin * camera.view * camera.project();
 
-			drawLine(rOrigin, rX, render.zbuffer, red);
-			drawLine(rOrigin, rY, render.zbuffer, green);
-			drawLine(rOrigin, rZ, render.zbuffer, blue);
+			drawLine(rOrigin, rX, red);
+			drawLine(rOrigin, rY, green);
+			drawLine(rOrigin, rZ, blue);
 
 			for (int i = 0; i < model.facesNumber(); i++) {
 				Vec3f triVert[3];
@@ -90,7 +88,7 @@ int main(int argc, char **argv) {
 					triVert[j] = model.triVert(i, j);
 					textureUV[j] = model.triUV(i, j);
 					triVert[j] = triVert[j] * scale(scaleVariable / 2) * rotationXY(angleTheta, anglePhi);
-					rTriVert[j] = triVert[j] * view * proj;
+					rTriVert[j] = triVert[j] * camera.view * camera.project();
 					if (rTriVert[j].x < -1.0f || rTriVert[j].x > 1.0f || rTriVert[j].y < -1.0f || rTriVert[j].y > 1.0f) {
 						continue;
 					}
