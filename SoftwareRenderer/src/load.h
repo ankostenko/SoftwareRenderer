@@ -1,14 +1,4 @@
 #pragma once
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <string>
-#include "srmath.h"
-#include "Model.h"
-#include "Image.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "../lib/stb_image.h"
 
 Vec3i splitVertAndUv(std::string &str) {
 	int vert;
@@ -70,14 +60,14 @@ void loadModel(Model &model, const char *pathname) {
 			iss >> x >> y >> z;
 
 			Vec3i temp = splitVertAndUv(x);
-			face.vertices.push_back(temp.x);
-			face.textureUV.push_back(temp.z);
+			face.vertices[0] = temp.x;
+			face.textureUV[0] = temp.z;
 			temp = splitVertAndUv(y);
-			face.vertices.push_back(temp.x);
-			face.textureUV.push_back(temp.z);
+			face.vertices[1] = temp.x;
+			face.textureUV[1] = temp.z;
 			temp = splitVertAndUv(z);
-			face.vertices.push_back(temp.x);
-			face.textureUV.push_back(temp.z);
+			face.vertices[2] = temp.x;
+			face.textureUV[2] = temp.z;
 
 			model.faces.push_back(face);
 		} else if (key == "vt") {
@@ -93,9 +83,12 @@ void loadModel(Model &model, const char *pathname) {
 	}
  
 	file.close();
+
+	render.models.push_back(&model);
+	render.numberOfModels += 1;
 }
 
-void loadTexture(Image &tex, const char *pathname) {
+void loadTexture(Model &model, const char *pathname) {
 	int width, height, nCh;
 
 	unsigned char *data = stbi_load(pathname, &width, &height, &nCh, 0);
@@ -105,8 +98,14 @@ void loadTexture(Image &tex, const char *pathname) {
 		return;
 	}
 
-	tex.width = width;
-	tex.height = height;
-	tex.bytepp = nCh;
-	tex.data = data;
+	Texture tex;
+
+	tex.texture.width = width;
+	tex.texture.height = height;
+	tex.texture.bytepp = nCh;
+	tex.texture.data = data;
+
+	tex.texture.flip_vertically();
+
+	model.texture = tex;
 }
