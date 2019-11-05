@@ -26,8 +26,8 @@ Model model;
 PerspectiveCamera camera(0.1f, 1000.0f, (float)M_PI / 3);
 //OrthographicCamera camera(0.1, 1000.0f, (float)M_PI / 3);
 
-int imageWidth =  1600;
-int imageHeight = 900;
+int imageWidth = 1300;
+int imageHeight = 700;
 
 int main(int argc, char **argv) {
 	initRenderer(imageWidth, imageHeight);
@@ -57,54 +57,62 @@ int main(int argc, char **argv) {
 	Vec3f origin = { 0.0f, 0.0f, 0.0f };
 
 	while (globalRunning) {
-		if (fpsLock.milliElapsed() > 16.0f) {
-			fpsLock.ResetStartTime();
-			
-			ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi, scaleVariable);
+		float timeEllapsed = fpsLock.milliElapsed();
 
-			clearZBuffer(camera.farClippingPlane);
-			clearImBuffer(peach);
+		if (timeEllapsed < 16.0f) {
+			std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(16.0f - timeEllapsed));
+		}
+		fpsLock.ResetStartTime();
+		float deltaTime = (timeEllapsed - fpsLock.milliElapsed()) / 33;
 
-			// Camera
-			camera.position = camera.staticPosition * translate(0.0f, 0.0f, 1.5f) * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
-			camera.lookAt(origin);
-			// NOTE: it shouldn't be explicit
-			camera.invView();
+		ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi, scaleVariable, deltaTime);
 
-			Vec3f rX = X * camera.view * camera.project();
-			Vec3f rY = Y * camera.view * camera.project();
-			Vec3f rZ = Z * camera.view * camera.project();
-			Vec3f rOrigin = origin * camera.view * camera.project();
+		clearZBuffer(camera.farClippingPlane);
+		clearImBuffer(peach);
 
-			drawLine(rOrigin, rX, red);
-			drawLine(rOrigin, rY, green);
-			drawLine(rOrigin, rZ, blue);
+		// Camera
+		camera.position = camera.staticPosition * translate(0.0f, 0.0f, 1.5f) * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
+		camera.lookAt(origin);
+		// NOTE: it shouldn't be explicit
+		camera.invView();
 
-			for (int i = 0; i < model.facesNumber(); i++) {
-				Vec3f triVert[3];
-				Vec3f rTriVert[3];
-				Vec3f textureUV[3];
-				for (int j = 0; j < 3; j++) {
-					triVert[j] = model.triVert(i, j);
-					textureUV[j] = model.triUV(i, j);
-					triVert[j] = triVert[j] * rotationX(anglePhi) * rotationY(angleTheta) * scale(scaleVariable / 2);
-					rTriVert[j] = triVert[j] * camera.view * camera.project();
-					if (rTriVert[j].x < -1.0f || rTriVert[j].x > 1.0f || rTriVert[j].y < -1.0f || rTriVert[j].y > 1.0f) {
-						continue;
-					}
-					viewport(rTriVert[j], render.imagebuffer.width, render.imagebuffer.height);
+		Mat4f vp = camera.view * camera.project();
+
+		Vec3f rX = X * vp;
+		Vec3f rY = Y * vp;
+		Vec3f rZ = Z * vp;
+		Vec3f rOrigin = origin * vp;
+		
+		drawLine(rOrigin, rX, red);
+		drawLine(rOrigin, rY, green);
+		drawLine(rOrigin, rZ, blue);
+
+		for (int i = 0; i < model.facesNumber(); i++) {
+			Vec3f triVert[3];
+			Vec3f rTriVert[3];
+			Vec3f textureUV[3];
+
+			Mat4f modelTransfrom = rotationX(anglePhi) * rotationY(angleTheta) * scale(scaleVariable / 2);
+			for (int j = 0; j < 3; j++) {
+				triVert[j] = model.triVert(i, j);
+				textureUV[j] = model.triUV(i, j);
+				triVert[j] = triVert[j] * modelTransfrom;
+				rTriVert[j] = triVert[j] * vp;
+				if (rTriVert[j].x < -1.0f || rTriVert[j].x > 1.0f || rTriVert[j].y < -1.0f || rTriVert[j].y > 1.0f) {
+					continue;
 				}
-				
-				rasterize(rTriVert, triVert, render.models[0]->texture, textureUV);
+				viewport(rTriVert[j], render.imagebuffer.width, render.imagebuffer.height);
 			}
 
-			render.imagebuffer.flip_vertically();
-			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
-			
-			char buffer[64];
-			wsprintf(buffer, "%d ms\n", (int)fpsLock.milliElapsed());
-			OutputDebugStringA(buffer);
+			rasterize(rTriVert, triVert, render.models[0]->texture, textureUV);
 		}
+
+		render.imagebuffer.flip_vertically();
+		Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
+
+		char buffer[64];
+		wsprintf(buffer, "%d ms\n", (int)fpsLock.milliElapsed());
+		OutputDebugStringA(buffer);
 	}
 
 	return 0;

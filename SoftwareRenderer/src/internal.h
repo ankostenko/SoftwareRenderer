@@ -10,6 +10,7 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <thread>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../lib/stb_image.h"
