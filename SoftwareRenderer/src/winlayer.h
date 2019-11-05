@@ -75,7 +75,7 @@ void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 #define X_BUTTON 0x58
 #define Z_BUTTON 0x5A
 #define P_BUTTON 0x50
-void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &cameraAngleTheta, float &cameraAnglePhi, float &scaleVariable) {
+void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &cameraAngleTheta, float &cameraAnglePhi, float &scaleVariable, float deltaTime) {
 	MSG msg;
 
 	if (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
@@ -90,42 +90,42 @@ void ProcessInput(HWND window, float &angleTheta, float &anglePhi, float &camera
 			bool isKeyDown = ((msg.lParam >> 31) == 0);
 			if (isKeyDown) {
 				if (vkCode == D_BUTTON) {
-					angleTheta += M_PI / 16;
+					angleTheta += M_PI / 16 * deltaTime;
 					if (angleTheta > 2 * M_PI) {
 						angleTheta = 0;
 					}
 				} else if (vkCode == A_BUTTON) {
-					angleTheta -= M_PI / 16;
+					angleTheta -= M_PI / 16 * deltaTime;
 					if (angleTheta < 0) {
 						angleTheta = 2 * M_PI;
 					}
 				} else if (vkCode == R_BUTTON) {
-					anglePhi += M_PI / 32;
-					if (anglePhi > M_PI / 2) {
-						anglePhi = M_PI / 2;
+					anglePhi += M_PI / 32 * deltaTime;
+					if (anglePhi > 2 * M_PI) {
+						anglePhi = 0;
 					}
 				} else if (vkCode == S_BUTTON) {
-					anglePhi -= M_PI / 32;
-					if (anglePhi < -M_PI / 2) {
-						anglePhi = -M_PI / 2;
+					anglePhi -= M_PI / 32 * deltaTime;
+					if (anglePhi < 0) {
+						anglePhi = 2 * M_PI;
 					}
 				} else if (vkCode == J_BUTTON) {
-					cameraAngleTheta -= M_PI / 16;
+					cameraAngleTheta -= M_PI / 16 * deltaTime;
 					if (cameraAngleTheta < 0) {
 						cameraAngleTheta = 2 * M_PI;
 					}
 				} else if (vkCode == L_BUTTON) {
-					cameraAngleTheta += M_PI / 16;
+					cameraAngleTheta += M_PI / 16 * deltaTime;
 					if (cameraAngleTheta > 2 * M_PI) {
 						cameraAngleTheta = 0;
 					}
 				} else if (vkCode == I_BUTTON) {
-					cameraAnglePhi -= M_PI / 16;
+					cameraAnglePhi -= M_PI / 16 * deltaTime;
 					if (cameraAngleTheta < 0) {
 						cameraAngleTheta = 2 * M_PI;
 					}
 				} else if (vkCode == K_BUTTON) {
-					cameraAnglePhi += M_PI / 16;
+					cameraAnglePhi += M_PI / 16 * deltaTime;
 					if (cameraAngleTheta > 2 * M_PI) {
 						cameraAngleTheta = 0;
 					}
