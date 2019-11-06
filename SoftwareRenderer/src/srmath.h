@@ -142,74 +142,25 @@ Mat4f translate(float x, float y, float z) {
 	return mat;
 }
 
-// Angle in radians
-Mat4f rotationY(float angle) {
-	Mat4f mat = identity();
+// ZXY order
+Mat4f rotate(float alpha, float beta, float gamma) {
+	Mat4f rotationMatrix;
 
-	//float values0[4] = {  cos(angle),	0,	sin(angle),	0 };
-	//float values1[4] = {		   0,	1,			 0,	0 };
-	//float values2[4] = { -sin(angle),	0,	cos(angle), 0 };
-	//float values3[4] = {		   0,	0,			 0,	1 };
-	//
-	//mat.setRow(0, values0);
-	//mat.setRow(1, values1);
-	//mat.setRow(2, values2);
-	//mat.setRow(3, values3);
+	float cosA = cos(alpha);
+	float sinA = sin(alpha);
 
-	mat.setRow(0, cos(angle), 0, -sin(angle), 0);
-	mat.setRow(1, 0, 1, 0, 0);
-	mat.setRow(2, sin(angle), 0,  cos(angle), 0);
-	mat.setRow(3, 0, 0, 0, 1);
+	float cosB = cos(beta);
+	float sinB = sin(beta);
 
-	return mat;
-}
+	float cosG = cos(gamma);
+	float sinG = sin(gamma);
 
-// What if this is column-major matrices?
-Mat4f rotationX(float angle) {
-	Mat4f mat = identity();
+	rotationMatrix.setRow(0, cosB * cosG + sinA * sinB * sinG, cosA * sinG, cosB * sinA * sinG - cosG * sinB, 0);
+	rotationMatrix.setRow(1, cosG * sinA * sinB - cosB * sinG, cosA * cosG, cosB * cosG * sinA + sinB * sinG, 0);
+	rotationMatrix.setRow(2,					  cosA * sinB,		 -sinA,						 cosA * cosB, 0);
+	rotationMatrix.setRow(3,								0,			 0,								   0, 1);
 
-	//float values0[4] = { 1,			 0,			  0,	0 };
-	//float values1[4] = { 0,	cos(angle),	-sin(angle),	0 };
-	//float values2[4] = { 0,	sin(angle),	 cos(angle),	0 };
-	//float values3[4] = { 0,			 0,			  0,	1 };
-	//
-	//mat.setRow(0, values0);
-	//mat.setRow(1, values1);
-	//mat.setRow(2, values2);
-	//mat.setRow(3, values3);
-
-	mat.setRow(0, 1,			0,			0, 0);
-	mat.setRow(1, 0,   cos(angle), sin(angle), 0);
-	mat.setRow(2, 0,  -sin(angle), cos(angle), 0);
-	mat.setRow(3, 0,			0,			0, 1);
-
-	return mat;
-}
-
-Mat4f rotationXY(float angleTheta, float anglePhi) {
-	Mat4f mat = identity();
-
-	//float values0[4] = { cos(angleTheta),	sin(angleTheta) * sin(anglePhi),	sin(angleTheta) * cos(anglePhi),	0 };
-	//float values1[4] = {			   0,					  cos(anglePhi),					 -sin(anglePhi),	0 };
-	//float values2[4] = { -sin(angleTheta),	cos(angleTheta) * sin(anglePhi),	cos(angleTheta) * cos(anglePhi),	0 };
-	//float values3[4] = {			   0,								  0,								  0,	1 };
-	//
-	//mat.setRow(0, values0);
-	//mat.setRow(1, values1);
-	//mat.setRow(2, values2);
-	//mat.setRow(3, values3);
-
-	//mat.setRow(0,				  cos(angleTheta),				0,				   sin(angleTheta), 0);
-	//mat.setRow(1, sin(angleTheta) * sin(anglePhi),  cos(anglePhi), cos(angleTheta) * sin(anglePhi), 0);
-	//mat.setRow(2, sin(angleTheta) * cos(anglePhi), -sin(anglePhi), cos(angleTheta) * cos(anglePhi), 0);
-	//mat.setRow(3,								0,				0,								 0, 1);
-
-	mat.setRow(0, cos(angleTheta),					0,							-sin(angleTheta), 0);
-	mat.setRow(1, sin(angleTheta) * sin(anglePhi), cos(anglePhi), cos(angleTheta) * sin(anglePhi), 0);
-	mat.setRow(2, cos(anglePhi) * sin(angleTheta), -sin(anglePhi), cos(angleTheta) * cos(anglePhi), 0);
-	mat.setRow(3, 0, 0, 0, 1);
-
-	return mat;
+	return rotationMatrix;
 }
 
 template<typename T>
@@ -221,22 +172,6 @@ template<typename T>
 Vec3f norm(T vec) {
 	float length = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 	return { vec.x / length, vec.y / length, vec.z / length };
-}
-
-Mat4f projection(float fov, float nearPlane, float farPlane) {
-	Mat4f proj = { };
-
-	float s = 1 / tan(fov / 2);
-
-	float c0 = -farPlane / (farPlane - nearPlane);
-	float c1 = -(farPlane * nearPlane) / (farPlane - nearPlane);
-
-	proj.setRow(0, s, 0,  0,  0);
-	proj.setRow(1, 0, s,  0,  0);
-	proj.setRow(2, 0, 0, c0, -1);
-	proj.setRow(3, 0, 0, c1,  0);
-
-	return proj;
 }
 
 Mat4f projection(float fov, float aspect, float nearPlane, float farPlane) {
