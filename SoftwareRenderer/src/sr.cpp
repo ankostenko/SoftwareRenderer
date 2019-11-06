@@ -32,7 +32,7 @@ int imageHeight = 700;
 int main(int argc, char **argv) {
 	initRenderer(imageWidth, imageHeight);
 
-	loadModel(model, "models\\african_head.obj");
+	loadModel(model, "models\\teapot.obj");
 	normalizeModelCoords(model);
 
 	// TODO: default texture loading
@@ -42,10 +42,11 @@ int main(int argc, char **argv) {
 
 	HWND window = Win32CreateWindow(imageWidth, imageHeight, "3D Renderer");
 
-	float angleTheta = 0;
-	float anglePhi = 0;
-	float cameraAngleTheta = 0;
-	float cameraAnglePhi = 0;
+	float angleAlpha = 0;
+	float angleBeta = 0;
+	float angleGamma = 0;
+	float cameraAngleAlpha = 0;
+	float cameraAngleBeta = 0;
 	float scaleVariable = 1.0f;
 
 	Timer fpsLock;
@@ -65,13 +66,14 @@ int main(int argc, char **argv) {
 		fpsLock.ResetStartTime();
 		float deltaTime = (timeEllapsed - fpsLock.milliElapsed()) / 33;
 
-		ProcessInput(window, angleTheta, anglePhi, cameraAngleTheta, cameraAnglePhi, scaleVariable, deltaTime);
+		ProcessInput(window, angleAlpha, angleBeta, angleGamma, cameraAngleAlpha, cameraAngleBeta, scaleVariable, deltaTime);
 
 		clearZBuffer(camera.farClippingPlane);
 		clearImBuffer(peach);
 
 		// Camera
-		camera.position = camera.staticPosition * translate(0.0f, 0.0f, 1.5f) * rotationX(cameraAnglePhi) * rotationY(cameraAngleTheta);
+		camera.position = camera.staticPosition * translate(0.0f, 0.0f, 2.0f) * rotate(cameraAngleAlpha, cameraAngleBeta, 0);
+		
 		camera.lookAt(origin);
 		// NOTE: it shouldn't be explicit
 		camera.invView();
@@ -92,7 +94,7 @@ int main(int argc, char **argv) {
 			Vec3f rTriVert[3];
 			Vec3f textureUV[3];
 
-			Mat4f modelTransfrom = rotationX(anglePhi) * rotationY(angleTheta) * scale(scaleVariable / 2);
+			Mat4f modelTransfrom = rotate(angleAlpha, angleBeta, angleGamma) * scale(scaleVariable);
 			for (int j = 0; j < 3; j++) {
 				triVert[j] = model.triVert(i, j);
 				textureUV[j] = model.triUV(i, j);
