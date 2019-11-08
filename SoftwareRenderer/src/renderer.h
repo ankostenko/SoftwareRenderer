@@ -6,6 +6,7 @@ struct RendererState {
 	std::vector<Model *> models;
 	int numberOfModels;
 	float *zbuffer;
+	Vec3f lightDir;
 };
 
 static RendererState render;

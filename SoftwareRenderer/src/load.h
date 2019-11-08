@@ -6,7 +6,12 @@ Vec3i splitVertAndUv(std::string &str) {
 	int vt = 0;
 
 	vert = std::stoi(str.substr(0, str.find('/')));
-	vt = std::stoi(str.substr(str.find_last_of('/') + 1, std::string::npos));
+	if (str.find_last_of('/') - str.find('/') == 1) {
+		vn = std::stoi(str.substr(str.find_last_of('/') + 1, std::string::npos));
+	} else {
+		vt = std::stoi(str.substr(str.find('/') + 1, str.find_last_of('/')));
+		vn = std::stoi(str.substr(str.find_last_of('/') + 1, std::string::npos));
+	}
 
 	return { vert - 1, vn - 1, vt - 1 };
 }
@@ -34,12 +39,13 @@ void loadModel(Model &model, const char *pathname) {
 	std::ifstream file;
 	file.open(pathname);
 
+	Timer timer;
 	if (!file) {
 		std::cout << "Couldn't open the file" << std::endl;
 		return;
 	}
 		
-	std::string line, key, x, y, z, uvX, uvY, uvZ;
+	std::string line, key, x, y, z, uvX, uvY, uvZ, vnX, vnY, vnZ;
 	while (!file.eof()) {
 		std::getline(file, line);
 		std::istringstream iss(line);
@@ -61,12 +67,15 @@ void loadModel(Model &model, const char *pathname) {
 
 			Vec3i temp = splitVertAndUv(x);
 			face.vertices[0] = temp.x;
+			face.normals[0] = temp.y;
 			face.textureUV[0] = temp.z;
 			temp = splitVertAndUv(y);
 			face.vertices[1] = temp.x;
+			face.normals[1] = temp.y;
 			face.textureUV[1] = temp.z;
 			temp = splitVertAndUv(z);
 			face.vertices[2] = temp.x;
+			face.normals[2] = temp.y;
 			face.textureUV[2] = temp.z;
 
 			model.faces.push_back(face);
@@ -79,6 +88,16 @@ void loadModel(Model &model, const char *pathname) {
 			uv.y = std::stof(uvY);
 
 			model.textureUV.push_back(uv);
+		} else if (key == "vn") {
+			Vec3f vn;
+
+			iss >> vnX >> vnY >> vnZ;
+
+			vn.x = std::stof(vnX);
+			vn.y = std::stof(vnY);
+			vn.z = std::stof(vnZ);
+
+			model.normals.push_back(vn);
 		}
 	}
  
@@ -86,11 +105,14 @@ void loadModel(Model &model, const char *pathname) {
 
 	render.models.push_back(&model);
 	render.numberOfModels += 1;
+
+	printf("[LOAD] Model %s took %f ms to load\n", pathname, timer.milliElapsed());
 }
 
 void loadTexture(Model &model, const char *pathname) {
 	int width, height, nCh;
 
+	Timer timer;
 	unsigned char *data = stbi_load(pathname, &width, &height, &nCh, 0);
 
 	if (!data) {
@@ -108,4 +130,5 @@ void loadTexture(Model &model, const char *pathname) {
 	tex.texture.flip_vertically();
 
 	model.texture = tex;
+	printf("[LOAD] Texture %s took %f ms to load\n", pathname, timer.milliElapsed());
 }
