@@ -135,6 +135,12 @@ Mat4f scale(float scaleValue) {
 	return mat;
 }
 
+Mat4f scaleY(float scaleValue) {
+	Mat4f mat = identity();
+	mat.setRow(1, 0, scaleValue, 0, 0);
+	return mat;
+}
+
 Mat4f translate(float x, float y, float z) {
 	Mat4f mat = identity();
 	float values[4] = { x, y, z, 1.0f };
@@ -306,7 +312,7 @@ void LUPInvert(float A[4][4], int *P, int N, float IA[4][4]) {
 	}
 }
 
-Mat4f inverse(Mat4f &mat) {
+Mat4f inverse(Mat4f mat) {
 	Mat4f inverted = { };
 	int P[32];
 
@@ -314,4 +320,16 @@ Mat4f inverse(Mat4f &mat) {
 	LUPInvert(mat.mat, P, 4, inverted.mat);
 
 	return inverted;
+}
+
+Mat4f transpose(Mat4f &mat) {
+	Mat4f ret = { };
+
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			ret[j][i] = mat[i][j];
+		}
+	}
+
+	return ret;
 }

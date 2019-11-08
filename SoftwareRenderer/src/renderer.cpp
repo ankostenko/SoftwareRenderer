@@ -60,7 +60,7 @@ float edgeFunction(const Vec3f &a, const Vec3f &b, const Vec3f &c) {
 }
 
 #define DEBUG_HAS_TEXTURE 0
-void rasterize(Vec3f *triVert, Vec3f *globalVert, Texture texture, Vec3f *uv) {
+void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 	triVert[0].z = 1 / triVert[0].z;
 	triVert[1].z = 1 / triVert[1].z;
 	triVert[2].z = 1 / triVert[2].z;
@@ -89,16 +89,6 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Texture texture, Vec3f *uv) {
 		if (triVert[i].y > maxY) {
 			maxY = triVert[i].y;
 		}
-	}
-
-	Vec3f lightDir = { -2.0f, -2.0f, -4.0f };
-	Vec3f edgeNormal = norm(cross(globalVert[2] - globalVert[0], globalVert[1] - globalVert[0]));
-	float intensity = norm(lightDir) * edgeNormal;
-	if (intensity > 1.0f) {
-		intensity = 1.0f;
-	}
-	if (intensity < 0) {
-		intensity = -intensity * 0.3;
 	}
 
 	float area = edgeFunction(triVert[0], triVert[1], triVert[2]);
@@ -142,6 +132,14 @@ void rasterize(Vec3f *triVert, Vec3f *globalVert, Texture texture, Vec3f *uv) {
 					color.g *= intensity;
 					color.b *= intensity;
 #else
+					Vec3f normal = normals[0] * w0 + normals[1] * w1 + normals[2] * w2;
+					normal = normal * z;
+					normal.normalize();
+
+					float intensity = render.lightDir * normal;
+					if (intensity > 1.0f) intensity = 1.0f;
+					if (intensity < 0.0) intensity = 0.0f;
+					
 					Color color(white.r * intensity, white.g * intensity, white.b * intensity);
 #endif
 					render.imagebuffer.set(x, y, color);
@@ -162,7 +160,6 @@ void clearImBuffer(Color color) {
 	for (int y = 0; y < render.imagebuffer.height; y++) {
 		memmove(&render.imagebuffer.data[y * size], row, size);
 	}
-	//delete[] row;
 }
 
 void clearZBuffer(float farClippingPlane) {
@@ -176,4 +173,5 @@ void initRenderer(int width, int height) {
 	render.imagebuffer = Image(width, height);
 	render.numberOfModels = 0;
 	render.zbuffer = new float[width * height];
+	render.lightDir = norm(Vec3f({ 0.0f, 0.0f, 3.0f }));
 }
