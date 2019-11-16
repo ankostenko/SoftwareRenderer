@@ -30,9 +30,9 @@ int imageWidth = 1200;
 int imageHeight = 600;
 
 int main(int argc, char **argv) {
-	initRenderer(imageWidth, imageHeight);
+	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f,  2.5f, 5.0f }));
 
-	loadModel(model, "models\\triking.obj"); 
+	loadModel(model, "models\\triking.obj");
 	normalizeModelCoords(model);
 
 	// TODO: default texture loading
@@ -88,23 +88,17 @@ int main(int argc, char **argv) {
 		drawLine(rOrigin, rZ, blue);
 		for (int i = 0; i < model.facesNumber(); i++) {
 			Vec3f triVert[3];
-			Vec3f rTriVert[3];
 			Vec3f textureUV[3];
 			Vec3f normals[3];
 
-			Mat4f modelTransform = translate(0.4f, -0.6f, -0.65f) * scale(scaleVariable) * scaleY(1.0f) * rotate(angleAlpha, angleBeta, angleGamma);
+			Mat4f modelTransform = translate(0.0, 0.0f, 0.0f) * scale(scaleVariable) * scaleY(1.0f) * rotate(angleAlpha, angleBeta, angleGamma);
 			for (int j = 0; j < 3; j++) {
-				triVert[j] = model.triVert(i, j);
+				triVert[j] = model.triVert(i, j) * modelTransform * vp;
 				textureUV[j] = model.triUV(i, j);
-				normals[j] = model.triNorm(i, j);
-				rTriVert[j] = triVert[j] * modelTransform * vp;
-				normals[j] = normals[j] * inverse(transpose(modelTransform));
-				if (rTriVert[j].x < -1.0f || rTriVert[j].x > 1.0f || rTriVert[j].y < -1.0f || rTriVert[j].y > 1.0f) {
-					continue;
-				}
-				viewport(rTriVert[j], render.imagebuffer.width, render.imagebuffer.height);
+				normals[j] = model.triNorm(i, j) * inverse(transpose(modelTransform));
+				viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
 			}
-			rasterize(rTriVert, normals, render.models[0]->texture, textureUV);
+			rasterize(triVert, normals, render.models[0]->texture, textureUV);
 		}
 		render.imagebuffer.flip_vertically();
 		Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
