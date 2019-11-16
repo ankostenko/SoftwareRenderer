@@ -120,8 +120,15 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 				if (z < render.zbuffer[x + y * render.imagebuffer.width]) {
 					render.zbuffer[x + y * render.imagebuffer.width] = z;
 					// TODO: Investigate what the hell is going on with texture mapping
-					// Texture mapping is working only after transformations done by MeshLab
+					// Texture mapping works only after transformations done by MeshLab
 					// It outputs completely different mapping and it does something but I'm not sure what
+					Vec3f normal = normals[0] * w0 + normals[1] * w1 + normals[2] * w2;
+					normal = normal * z;
+					normal.normalize();
+
+					float intensity = render.lightDir * normal;
+					if (intensity > 1.0f) intensity = 1.0f;
+					if (intensity < 0.0) intensity = 0.0f;
 #if DEBUG_HAS_TEXTURE
 					Vec3f uvC = uv[0] * w0 + uv[1] * w1 + uv[2] * w2;
 					uvC = uvC * z;
@@ -132,14 +139,6 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 					color.g *= intensity;
 					color.b *= intensity;
 #else
-					Vec3f normal = normals[0] * w0 + normals[1] * w1 + normals[2] * w2;
-					normal = normal * z;
-					normal.normalize();
-
-					float intensity = render.lightDir * normal;
-					if (intensity > 1.0f) intensity = 1.0f;
-					if (intensity < 0.0) intensity = 0.0f;
-					
 					Color color(white.r * intensity, white.g * intensity, white.b * intensity);
 #endif
 					render.imagebuffer.set(x, y, color);
@@ -169,9 +168,9 @@ void clearZBuffer(float farClippingPlane) {
 	}
 }
 
-void initRenderer(int width, int height) {
+void initRenderer(int width, int height, Vec3f lightDir) {
 	render.imagebuffer = Image(width, height);
 	render.numberOfModels = 0;
 	render.zbuffer = new float[width * height];
-	render.lightDir = norm(Vec3f({ 0.0f, 0.0f, 3.0f }));
+	render.lightDir = norm(lightDir);
 }
