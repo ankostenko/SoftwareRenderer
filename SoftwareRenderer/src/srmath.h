@@ -333,3 +333,29 @@ Mat4f transpose(Mat4f &mat) {
 
 	return ret;
 }
+
+float clampMinMax(float min, float max, float value) {
+	if (value > max) {
+		return max;
+	}
+	if (value < min) {
+		return min;
+	}
+
+	return value;
+}
+
+float clampMin(float min, float value) {
+	if (value < min) {
+		return min;
+	}
+	return value;
+}
+
+float maxf(float value0, float value1) {
+	if (value0 > value1) {
+		return value0;
+	}
+
+	return value1;
+}

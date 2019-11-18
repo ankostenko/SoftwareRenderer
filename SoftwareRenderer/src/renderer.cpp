@@ -126,9 +126,13 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 					normal = normal * z;
 					normal.normalize();
 
-					float intensity = render.lightDir * normal;
-					if (intensity > 1.0f) intensity = 1.0f;
-					if (intensity < 0.0) intensity = 0.0f;
+					// Program counts properties of a material and light to render a shaded point
+					float albedo = 1.0f;
+					char r = render.light.color.r * clampMinMax(0.0f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal)));
+					char g = render.light.color.g * clampMinMax(0.0f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal)));
+					char b = render.light.color.b * clampMinMax(0.0f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal)));
+					Color hitColor(r, g, b);
+
 #if DEBUG_HAS_TEXTURE
 					Vec3f uvC = uv[0] * w0 + uv[1] * w1 + uv[2] * w2;
 					uvC = uvC * z;
@@ -139,7 +143,7 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 					color.g *= intensity;
 					color.b *= intensity;
 #else
-					Color color(white.r * intensity, white.g * intensity, white.b * intensity);
+					Color color(hitColor);
 #endif
 					render.imagebuffer.set(x, y, color);
 				}
@@ -172,5 +176,8 @@ void initRenderer(int width, int height, Vec3f lightDir) {
 	render.imagebuffer = Image(width, height);
 	render.numberOfModels = 0;
 	render.zbuffer = new float[width * height];
-	render.lightDir = norm(lightDir);
+
+	render.light.direction = norm(lightDir);
+	render.light.intensity = 3.5f;
+	render.light.color = white;
 }
