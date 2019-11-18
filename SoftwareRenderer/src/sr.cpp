@@ -32,7 +32,7 @@ int imageHeight = 600;
 int main(int argc, char **argv) {
 	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f,  2.5f, 5.0f }));
 
-	loadModel(model, "models\\triking.obj");
+	loadModel(model, "models\\sphere.obj");
 	normalizeModelCoords(model);
 
 	// TODO: default texture loading
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 			for (int j = 0; j < 3; j++) {
 				triVert[j] = model.triVert(i, j) * modelTransform * vp;
 				textureUV[j] = model.triUV(i, j);
-				normals[j] = model.triNorm(i, j) * inverse(transpose(modelTransform));
+				normals[j] = norm(model.triNorm(i, j) * inverse(transpose(modelTransform)));
 				viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
 			}
 			rasterize(triVert, normals, render.models[0]->texture, textureUV);
