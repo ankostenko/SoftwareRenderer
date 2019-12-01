@@ -29,6 +29,7 @@ int imageWidth =  800;
 int imageHeight = 600;
 
 int main(int argc, char **argv) {
+	mouse = { imageWidth / 2, imageHeight / 2 };
 	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f,  2.5f, 5.0f }));
 
 	loadModel(model, "models\\cube.obj");
@@ -40,7 +41,8 @@ int main(int argc, char **argv) {
 	clearImBuffer(black);
 
 	HWND window = Win32CreateWindow(imageWidth, imageHeight, "3D Renderer");
-	Win32ShowCursor(true);
+	Win32ShowCursor(false);
+	SetCapture(window);
 
 	float angleAlpha = 0;
 	float angleBeta = 0;
@@ -78,16 +80,10 @@ int main(int argc, char **argv) {
 		clearZBuffer(camera.farClippingPlane);
 		clearImBuffer(Color(255 * 0.6f, 255 * 0.3f, 255 * 0.2f));
 
-		//camera.processMouseInput(mouse.x, mouse.y, deltaTime);
+		camera.processMouseInput(mouse.x, mouse.y, deltaTime);
 		camera.processMouseScrolling(mouse);
 		camera.forwardMovement(cameraForwardDirection, deltaTime);
 		camera.rightMovement(cameraRightDirection, deltaTime);
-		camera.yaw += 1.3 * deltaTime;
-		//camera.yaw = degrees(angleAlpha);
-		printf("Yaw: %f\n", camera.yaw);
-		if (camera.yaw > 360.0f) {
-			camera.yaw = 0;
-		}
 		camera.updateVectors();
 		camera.lookAt();
 

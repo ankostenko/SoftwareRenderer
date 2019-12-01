@@ -20,14 +20,6 @@ enum KeyBindings {
 	E_BUTTON = 0x45,
 };
 
-struct Mouse {
-	int x;
-	int y;
-	float wheelFOV;
-};
-
-Mouse mouse;
-
 extern bool globalRunning;
 extern bool globalPause;
 
@@ -38,6 +30,14 @@ void *buffer_memory;
 int buffer_width;
 int buffer_height;
 BITMAPINFO buffer_bitmapinfo;
+
+struct Mouse {
+	int x;
+	int y;
+	float wheelFOV;
+};
+
+struct Mouse mouse = { buffer_width / 2, buffer_height / 2 };
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
@@ -98,95 +98,112 @@ void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angleGamma, int &forwardDirection, int &rightDirection, float &scaleVariable, float deltaTime) {
 	MSG msg;
 
-	if (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
+	while (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
-	}
 
-	switch (msg.message) {
-		// Mouse
-		// NOTE: Turned out that editor's features require more knowledge than I expected.
-		// So probably I put it away for a while.
-		case WM_LBUTTONDOWN:
-		case WM_LBUTTONUP: {
-			
-		} break;
-		case WM_ACTIVATEAPP: {
-			OutputDebugStringA("Activated\n");
-			SetCursorPos(buffer_width / 2, buffer_height / 2);
-		} break;
-		case WM_MOUSEMOVE: {
-			mouse.x = GET_X_LPARAM(msg.lParam);
-			mouse.y = GET_Y_LPARAM(msg.lParam);
-		} break;
-		case WM_MOUSEWHEEL: {
-			int scroll = GET_WHEEL_DELTA_WPARAM(msg.wParam);
-			float wheelSensitivity = 1.0f;
+		switch (msg.message) {
+			// Mouse
+			// NOTE: Turned out that editor's features require more knowledge than I expected.
+			// So probably I put it away for a while.
+			case WM_LBUTTONDOWN:
+			case WM_LBUTTONUP: {
 
-			mouse.wheelFOV += (float)scroll / fabs(scroll) * wheelSensitivity;
-			if (mouse.wheelFOV >= 45.0f) {
-				mouse.wheelFOV = 45.0f;
-			}
-			if (mouse.wheelFOV <= 1.0f) {
-				mouse.wheelFOV = 1.0f;
-			}
-		} break;
-		// Keyboard
-		case WM_KEYUP:
-		case WM_KEYDOWN: {
-			UINT32 vkCode = msg.wParam;
-			bool isKeyDown = ((msg.lParam >> 31) == 0);
-			if (isKeyDown) {
-				if (vkCode == D_BUTTON) {
-					angleBeta += M_PI / 8 * deltaTime;
-					if (angleBeta > 2 * M_PI) {
-						angleBeta = 0;
-					}
-				} else if (vkCode == A_BUTTON) {
-					angleBeta -= M_PI / 8 * deltaTime;
-					if (angleBeta < 0) {
-						angleBeta = 2 * M_PI;
-					}
-				} else if (vkCode == E_BUTTON) {
-					angleGamma -= M_PI / 8 * deltaTime;
-					if (angleGamma < 0) {
-						angleGamma = 2 * M_PI;
-					}
-				} else if (vkCode == Q_BUTTON) {
-					angleGamma += M_PI / 8 * deltaTime;
-					if (angleGamma > 2 * M_PI) {
-						angleGamma = 0;
-					}
-				} else if (vkCode == W_BUTTON) {
-					angleAlpha += M_PI / 8 * deltaTime;
-					if (angleAlpha > 2 * M_PI) {
-						angleAlpha = 0;
-					}
-				} else if (vkCode == S_BUTTON) {
-					angleAlpha -= M_PI / 8 * deltaTime;
-					if (angleAlpha < 0) {
-						angleAlpha = 2 * M_PI;
-					}
-				} else if (vkCode == J_BUTTON) {
-					rightDirection = -1;
-				} else if (vkCode == L_BUTTON) {
-					rightDirection = 1;
-				} else if (vkCode == I_BUTTON) {
-					forwardDirection = 1;
-				} else if (vkCode == K_BUTTON) {
-					forwardDirection = -1;
-				} else if (vkCode == VK_ESCAPE) {
-					globalRunning = !globalRunning;
-				} else if (vkCode == X_BUTTON) {
-					scaleVariable *= 1.2f;
-				} else if (vkCode == Z_BUTTON) {
-					scaleVariable /= 1.2f;
-				} else if (vkCode == P_BUTTON) {
-					globalPause = !globalPause;
+			} break;
+			case WM_ACTIVATE: {
+				OutputDebugStringA("Activated\n");
+				SetCursorPos(buffer_width / 2, buffer_height / 2);
+			} break;
+			case WM_MOUSEMOVE: {
+				mouse.x = GET_X_LPARAM(msg.lParam);
+				mouse.y = GET_Y_LPARAM(msg.lParam);
+
+				POINT pt = { buffer_width / 2, buffer_height / 2 };
+				ClientToScreen(window, &pt);
+				SetCursorPos(pt.x, pt.y);
+			} break;
+			case WM_MOUSEWHEEL: {
+				int scroll = GET_WHEEL_DELTA_WPARAM(msg.wParam);
+				float wheelSensitivity = 1.0f;
+
+				mouse.wheelFOV += (float)scroll / fabs(scroll) * wheelSensitivity;
+				if (mouse.wheelFOV >= 45.0f) {
+					mouse.wheelFOV = 45.0f;
 				}
-			}
-		} break;
+				if (mouse.wheelFOV <= 1.0f) {
+					mouse.wheelFOV = 1.0f;
+				}
+			} break;
+				// Keyboard
+			case WM_KEYUP:
+			case WM_KEYDOWN: {
+				UINT32 vkCode = msg.wParam;
+				bool isKeyDown = ((msg.lParam >> 31) == 0);
+				if (isKeyDown) {
+					if (vkCode == D_BUTTON) {
+						angleBeta += M_PI / 8 * deltaTime;
+						if (angleBeta > 2 * M_PI) {
+							angleBeta = 0;
+						}
+					}
+					else if (vkCode == A_BUTTON) {
+						angleBeta -= M_PI / 8 * deltaTime;
+						if (angleBeta < 0) {
+							angleBeta = 2 * M_PI;
+						}
+					}
+					else if (vkCode == E_BUTTON) {
+						angleGamma -= M_PI / 8 * deltaTime;
+						if (angleGamma < 0) {
+							angleGamma = 2 * M_PI;
+						}
+					}
+					else if (vkCode == Q_BUTTON) {
+						angleGamma += M_PI / 8 * deltaTime;
+						if (angleGamma > 2 * M_PI) {
+							angleGamma = 0;
+						}
+					}
+					else if (vkCode == W_BUTTON) {
+						angleAlpha += M_PI / 8 * deltaTime;
+						if (angleAlpha > 2 * M_PI) {
+							angleAlpha = 0;
+						}
+					}
+					else if (vkCode == S_BUTTON) {
+						angleAlpha -= M_PI / 8 * deltaTime;
+						if (angleAlpha < 0) {
+							angleAlpha = 2 * M_PI;
+						}
+					}
+					else if (vkCode == J_BUTTON) {
+						rightDirection = -1;
+					}
+					else if (vkCode == L_BUTTON) {
+						rightDirection = 1;
+					}
+					else if (vkCode == I_BUTTON) {
+						forwardDirection = 1;
+					}
+					else if (vkCode == K_BUTTON) {
+						forwardDirection = -1;
+					}
+					else if (vkCode == VK_ESCAPE) {
+						globalRunning = !globalRunning;
+					}
+					else if (vkCode == X_BUTTON) {
+						scaleVariable *= 1.2f;
+					}
+					else if (vkCode == Z_BUTTON) {
+						scaleVariable /= 1.2f;
+					}
+					else if (vkCode == P_BUTTON) {
+						globalPause = !globalPause;
+					}
+				}
+			} break;
 
+		}
 	}
 	return;
 }
