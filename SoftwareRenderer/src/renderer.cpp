@@ -70,6 +70,11 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 	uv[1] = uv[1] * triVert[1].z;
 	uv[2] = uv[2] * triVert[2].z;
 #endif
+	//int minX = 0;
+	//int minY = 0;
+	//int maxX = render.imagebuffer.width;
+	//int maxY = render.imagebuffer.height;
+
 	// Find "border" box
 	int minX = triVert[0].x;
 	int minY = triVert[0].y;
@@ -90,6 +95,11 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 			maxY = triVert[i].y;
 		}
 	}
+
+	if (minY < 0) { minY = 0; }
+	if (minX < 0) { minX = 0; }
+	if (maxY > render.imagebuffer.height) { maxY = render.imagebuffer.height; }
+	if (maxX > render.imagebuffer.width) { maxX = render.imagebuffer.width; }
 
 	float area = edgeFunction(triVert[0], triVert[1], triVert[2]);
 	if (area <= 0) {
@@ -138,10 +148,10 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 					uvC = uvC * z;
 					Color color = texture.texture.get(uvC.x, uvC.y);
 
-					color.swapRBChannels();
-					color.r *= intensity;
-					color.g *= intensity;
-					color.b *= intensity;
+					//color.swapRBChannfels();
+					//color.r *= intensity;
+					//color.g *= intensity;
+					//color.b *= intensity;
 #else
 					Color color(hitColor);
 #endif

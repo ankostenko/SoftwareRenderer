@@ -240,7 +240,37 @@ Mat4f lookAt(Vec3f from, Vec3f to) {
 	ret.setRow(2, values2);
 	ret.setRow(3, values3);
 
+	//ret.setRow(0, right.x, up.x, forward.x, 0.0f);
+	//ret.setRow(1, right.y, up.y, forward.y, 0.0f);
+	//ret.setRow(2, right.z, up.z, forward.z, 0.0f);
+	//ret.setRow(3, from.x, from.y, from.z, 1);
+
 	return ret;
+}
+
+Mat4f lookAt(Vec3f eye, Vec3f to, Vec3f up) {
+	Vec3f forward = norm(to - eye);
+	Vec3f right = norm(cross(forward, up));
+
+	Mat4f ret = {  };
+
+	//ret.setRow(0, right.x, right.y, right.z, eye.x);
+	//ret.setRow(1, up.x, up.y, up.z, eye.y);
+	//ret.setRow(2, forward.x, forward.y, forward.z, eye.z);
+	//ret.setRow(3, 0, 0, 0, 1.0f);
+
+	//ret.setRow(0, right.x, up.x, forward.x, 0.0f);
+	//ret.setRow(1, right.y, up.y, forward.y, 0.0f);
+	//ret.setRow(2, right.z, up.z, forward.z, 0.0f);
+	//ret.setRow(3, eye.x, eye.y, eye.z, 1);
+
+	ret.setRow(0,	   right.x,	    right.y,		 right.z, 0.0f);
+	ret.setRow(1,		  up.x,	   	   up.y,		    up.z, 0.0f);
+	ret.setRow(2,	 -forward.x,	  -forward.y,	   -forward.z, 0.0f);
+	ret.setRow(3,		eye.x,		 eye.y,	 	  eye.z, 1.0f);
+
+	return ret;
+
 }
 
 int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
