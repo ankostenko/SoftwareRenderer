@@ -48,6 +48,8 @@ int main(int argc, char **argv) {
 	float cameraAngleAlpha = 0;
 	float cameraAngleBeta = 0;
 	float scaleVariable = 1.0f;
+	int cameraForwardDirection = 0;
+	int cameraRightDirection = 0;
 
 	Timer fpsLock;
 
@@ -69,13 +71,18 @@ int main(int argc, char **argv) {
 		fpsLock.ResetStartTime();
 		float deltaTime = (timeEllapsed - fpsLock.milliElapsed()) / 33;
 
-		ProcessInput(window, angleAlpha, angleBeta, angleGamma, cameraAngleAlpha, cameraAngleBeta, scaleVariable, deltaTime);
+		cameraForwardDirection = 0;
+		cameraRightDirection = 0;
+		ProcessInput(window, angleAlpha, angleBeta, angleGamma, cameraForwardDirection, cameraRightDirection, scaleVariable, deltaTime);
 
 		clearZBuffer(camera.farClippingPlane);
 		clearImBuffer(Color(255 * 0.6f, 255 * 0.3f, 255 * 0.2f));
 
 		camera.processMouseInput(mouse.x, mouse.y, deltaTime);
 		camera.processMouseScrolling(mouse);
+		camera.forwardMovement(cameraForwardDirection, deltaTime);
+		camera.rightMovement(cameraRightDirection, deltaTime);
+		camera.updateVectors();
 		camera.lookAt();
 
 		Mat4f vp = camera.view * camera.project();
