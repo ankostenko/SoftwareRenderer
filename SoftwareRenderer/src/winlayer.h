@@ -1,5 +1,32 @@
 #pragma once
 
+
+enum KeyBindings {
+	S_BUTTON = 0x53,
+	C_BUTTON = 0x43,
+	R_BUTTON = 0x52,
+	B_BUTTON = 0x42,
+	D_BUTTON = 0x44,
+	A_BUTTON = 0x41,
+	L_BUTTON = 0x4C,
+	J_BUTTON = 0x4A,
+	I_BUTTON = 0x49,
+	K_BUTTON = 0x4B,
+	X_BUTTON = 0x58,
+	Z_BUTTON = 0x5A,
+	P_BUTTON = 0x50,
+	W_BUTTON = 0x57,
+	Q_BUTTON = 0x51,
+	E_BUTTON = 0x45,
+};
+
+struct Mouse {
+	int x;
+	int y;
+};
+
+Mouse mouse;
+
 extern bool globalRunning;
 extern bool globalPause;
 
@@ -57,27 +84,15 @@ HWND Win32CreateWindow(int width, int height, const char *name) {
 	return hwnd;
 }
 
+void Win32ShowCursor(bool cursor) {
+	ShowCursor(cursor);
+}
+
 void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 	HDC hdc = GetDC(window);
 	StretchDIBits(hdc, 0, 0, width, height, 0, 0, width, height, image, &buffer_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
 }
 
-#define S_BUTTON 0x53
-#define C_BUTTON 0x43
-#define R_BUTTON 0x52
-#define B_BUTTON 0x42
-#define D_BUTTON 0x44
-#define A_BUTTON 0x41
-#define L_BUTTON 0x4C
-#define J_BUTTON 0x4A
-#define I_BUTTON 0x49
-#define K_BUTTON 0x4B
-#define X_BUTTON 0x58
-#define Z_BUTTON 0x5A
-#define P_BUTTON 0x50
-#define W_BUTTON 0x57
-#define Q_BUTTON 0x51
-#define E_BUTTON 0x45
 // Alpha - around X axis, Beta - around Y axis, Gamma - around Z axis
 void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angleGamma, float &cameraAngleAlpha, float &cameraAngleBeta, float &scaleVariable, float deltaTime) {
 	MSG msg;
@@ -93,7 +108,11 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 		// So probably I put it away for a while.
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP: {
-			OutputDebugStringA("Mouse left button was clicked\n");
+			
+		} break;
+		case WM_MOUSEMOVE: {
+			mouse.x = GET_X_LPARAM(msg.lParam);
+			mouse.y = GET_Y_LPARAM(msg.lParam);
 		} break;
 		// Keyboard
 		case WM_KEYUP:

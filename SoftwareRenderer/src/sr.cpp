@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
 	clearImBuffer(black);
 
 	HWND window = Win32CreateWindow(imageWidth, imageHeight, "3D Renderer");
+	Win32ShowCursor(true);
 
 	float angleAlpha = 0;
 	float angleBeta = 0;
@@ -81,7 +82,7 @@ int main(int argc, char **argv) {
 		//if (camera.yaw >= 1.5 * M_PI) {
 		//	camera.yaw = -M_PI / 2;
 		//}
-		camera.yaw += 0.02f * deltaTime;
+		camera.processMouseInput(mouse.x, mouse.y, deltaTime);
 		camera.lookAt();
 
 		Mat4f vp = camera.view * camera.project();
