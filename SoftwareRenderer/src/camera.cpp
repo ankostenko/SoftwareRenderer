@@ -35,12 +35,13 @@ struct FreeCamera {
 	float fov;
 	Mat4f view;
 	Mat4f proj;
-	float yaw = -M_PI / 2;
+	float yaw = -90.0f;
 	float pitch = 0.0f;
 
 	int lastMouseY;
 	int lastMouseX;
-	float mouseSensitivity = 0.01f;
+	float mouseSensitivity = 0.1f;
+	float movementSpeed = 1.0f;
 
 	FreeCamera(float nearPlane, float farPlane, float fov, Vec3f pos = Vec3f({ 3.0f, 0.0f, 3.0f })) : position(pos), fov(fov), nearClippingPlane(nearPlane),
 		farClippingPlane(farPlane), worldUp(Vec3f({ 0.0f, 1.0f, 0.0f })) {
@@ -49,7 +50,6 @@ struct FreeCamera {
 	}
 
 	void lookAt() {
-		updateVectors();
 		view = inverse(::lookAt(position, position + front, up));
 	}
 
@@ -73,10 +73,18 @@ struct FreeCamera {
 		fov = mouse.wheelFOV;
 	}
 
+	void forwardMovement(int direction, float deltaTime) {
+		position = position + front * movementSpeed * deltaTime * direction;
+	}
+
+	void rightMovement(int direction, float deltaTime) {
+		position = position + right * movementSpeed * deltaTime * direction;
+	}
+
 	void updateVectors() {
-		front.x = cos(yaw) * cos(pitch);
-		front.y = sin(pitch);
-		front.z = cos(pitch) * sin(yaw);
+		front.x = cos(radians(yaw)) * cos(radians(pitch));
+		front.y = sin(radians(pitch));
+		front.z = cos(radians(pitch)) * sin(radians(yaw));
 		front = norm(front);
 
 		right = norm(cross(front, worldUp));

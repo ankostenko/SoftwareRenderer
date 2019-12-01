@@ -95,7 +95,7 @@ void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 }
 
 // Alpha - around X axis, Beta - around Y axis, Gamma - around Z axis
-void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angleGamma, float &cameraAngleAlpha, float &cameraAngleBeta, float &scaleVariable, float deltaTime) {
+void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angleGamma, int &forwardDirection, int &rightDirection, float &scaleVariable, float deltaTime) {
 	MSG msg;
 
 	if (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
@@ -164,25 +164,13 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 						angleAlpha = 2 * M_PI;
 					}
 				} else if (vkCode == J_BUTTON) {
-					cameraAngleBeta -= M_PI / 8 * deltaTime;
-					if (cameraAngleBeta < 0) {
-						cameraAngleBeta = 2 * M_PI;
-					}
+					rightDirection = -1;
 				} else if (vkCode == L_BUTTON) {
-					cameraAngleBeta += M_PI / 8 * deltaTime;
-					if (cameraAngleBeta > 2 * M_PI) {
-						cameraAngleBeta = 0;
-					}
+					rightDirection = 1;
 				} else if (vkCode == I_BUTTON) {
-					cameraAngleAlpha -= M_PI / 8 * deltaTime;
-					if (cameraAngleBeta < 0) {
-						cameraAngleBeta = 2 * M_PI;
-					}
+					forwardDirection = 1;
 				} else if (vkCode == K_BUTTON) {
-					cameraAngleAlpha += M_PI / 8 * deltaTime;
-					if (cameraAngleBeta > 2 * M_PI) {
-						cameraAngleBeta = 0;
-					}
+					forwardDirection = -1;
 				} else if (vkCode == VK_ESCAPE) {
 					globalRunning = !globalRunning;
 				} else if (vkCode == X_BUTTON) {
