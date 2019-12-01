@@ -2,6 +2,9 @@ void drawLine(Vec3f p1, Vec3f p2, Color &color) {
 	viewport(p1, render.imagebuffer.width, render.imagebuffer.height);
 	viewport(p2, render.imagebuffer.width, render.imagebuffer.height);
 
+	if (p1.z < -1.0f || p1.z > 1.0f) { return; }
+	if (p2.z < -1.0f || p2.z > 1.0f) { return; }
+
 	float x1 = p1.x;
 	float y1 = p1.y;
 	float x2 = p2.x;
@@ -27,6 +30,11 @@ void drawLine(Vec3f p1, Vec3f p2, Color &color) {
 	int derror2 = std::abs(dy) * 2;
 	int error2 = 0;
 	int y = y1;
+
+	if (x1 < 0) { x1 = 0; }
+	if (x1 > render.imagebuffer.width) { x1 = render.imagebuffer.width; }
+	if (x2 < 0) { x2 = 0; }
+	if (x2 > render.imagebuffer.width) { x2 = render.imagebuffer.width; }
 
 	for (int x = x1; x <= x2; x++) {
 		float t = (x - x1) / (x2 - x1);
@@ -61,6 +69,11 @@ float edgeFunction(const Vec3f &a, const Vec3f &b, const Vec3f &c) {
 
 #define DEBUG_HAS_TEXTURE 0
 void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
+	// z-cullling
+	if (triVert[0].z < -1.0f || triVert[0].z > 1.0f) { return; }
+	if (triVert[1].z < -1.0f || triVert[1].z > 1.0f) { return; }
+	if (triVert[2].z < -1.0f || triVert[2].z > 1.0f) { return; }
+
 	triVert[0].z = 1 / triVert[0].z;
 	triVert[1].z = 1 / triVert[1].z;
 	triVert[2].z = 1 / triVert[2].z;
@@ -96,10 +109,10 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 		}
 	}
 
-	if (minY < 0) { minY = 0; }
-	if (minX < 0) { minX = 0; }
-	if (maxY > render.imagebuffer.height) { maxY = render.imagebuffer.height; }
-	if (maxX > render.imagebuffer.width) { maxX = render.imagebuffer.width; }
+	if (minY < 0) { return; }
+	if (minX < 0) { return; }
+	if (maxY > render.imagebuffer.height) { return; }
+	if (maxX > render.imagebuffer.width)  { return; }
 
 	float area = edgeFunction(triVert[0], triVert[1], triVert[2]);
 	if (area <= 0) {
@@ -138,9 +151,9 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 
 					// Program counts properties of a material and light to render a shaded point
 					float albedo = 1.0f;
-					char r = render.light.color.r * clampMinMax(0.0f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal)));
-					char g = render.light.color.g * clampMinMax(0.0f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal)));
-					char b = render.light.color.b * clampMinMax(0.0f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal)));
+					char r = render.light.color.r * (clampMinMax(0.25f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal))));
+					char g = render.light.color.g * (clampMinMax(0.25f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal))));
+					char b = render.light.color.b * (clampMinMax(0.25f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal))));
 					Color hitColor(r, g, b);
 
 #if DEBUG_HAS_TEXTURE

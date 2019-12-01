@@ -111,6 +111,10 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 		case WM_LBUTTONUP: {
 			
 		} break;
+		case WM_ACTIVATEAPP: {
+			OutputDebugStringA("Activated\n");
+			SetCursorPos(buffer_width / 2, buffer_height / 2);
+		} break;
 		case WM_MOUSEMOVE: {
 			mouse.x = GET_X_LPARAM(msg.lParam);
 			mouse.y = GET_Y_LPARAM(msg.lParam);

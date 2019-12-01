@@ -78,10 +78,16 @@ int main(int argc, char **argv) {
 		clearZBuffer(camera.farClippingPlane);
 		clearImBuffer(Color(255 * 0.6f, 255 * 0.3f, 255 * 0.2f));
 
-		camera.processMouseInput(mouse.x, mouse.y, deltaTime);
+		//camera.processMouseInput(mouse.x, mouse.y, deltaTime);
 		camera.processMouseScrolling(mouse);
 		camera.forwardMovement(cameraForwardDirection, deltaTime);
 		camera.rightMovement(cameraRightDirection, deltaTime);
+		camera.yaw += 1.3 * deltaTime;
+		//camera.yaw = degrees(angleAlpha);
+		printf("Yaw: %f\n", camera.yaw);
+		if (camera.yaw > 360.0f) {
+			camera.yaw = 0;
+		}
 		camera.updateVectors();
 		camera.lookAt();
 

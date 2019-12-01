@@ -276,6 +276,10 @@ float radians(float degrees) {
 	return degrees * M_PI / 180;
 }
 
+float degrees(float radians) {
+	return radians * 180 / M_PI;
+}
+
 int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
 	int i, j, k, imax;
 	float maxA, absA;
