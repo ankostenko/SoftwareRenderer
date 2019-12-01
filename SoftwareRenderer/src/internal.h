@@ -3,6 +3,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <windows.h>
+#include <windowsx.h>
 
 #include <vector>
 #define _USE_MATH_DEFINES

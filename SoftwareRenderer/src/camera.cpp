@@ -38,6 +38,10 @@ struct FreeCamera {
 	float yaw = -M_PI / 2;
 	float pitch = 0.0f;
 
+	int lastMouseY;
+	int lastMouseX;
+	float mouseSensitivity = 0.01f;
+
 	FreeCamera(float nearPlane, float farPlane, float fov, Vec3f pos = Vec3f({ 3.0f, 0.0f, 3.0f })) : position(pos), fov(fov), nearClippingPlane(nearPlane),
 		farClippingPlane(farPlane), worldUp(Vec3f({ 0.0f, 1.0f, 0.0f })) {
 		updateVectors();
@@ -51,6 +55,17 @@ struct FreeCamera {
 	Mat4f project() {
 		proj = projection(fov, render.imagebuffer.width / (float)render.imagebuffer.height, nearClippingPlane, farClippingPlane);
 		return proj;
+	}
+	
+	void processMouseInput(int newMouseX, int newMouseY, float deltaTime) {
+		int xOffset = -(lastMouseX - newMouseX);
+		int yOffset = lastMouseY - newMouseY;
+
+		yaw += (float)xOffset * mouseSensitivity * deltaTime;
+		pitch += (float)yOffset * mouseSensitivity * deltaTime;
+
+		lastMouseX = newMouseX;
+		lastMouseY = newMouseY;
 	}
 
 	void updateVectors() {
