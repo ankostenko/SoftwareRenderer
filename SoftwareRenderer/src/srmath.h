@@ -270,7 +270,10 @@ Mat4f lookAt(Vec3f eye, Vec3f to, Vec3f up) {
 	ret.setRow(3,		eye.x,		 eye.y,	 	  eye.z, 1.0f);
 
 	return ret;
+}
 
+float radians(float degrees) {
+	return degrees * M_PI / 180;
 }
 
 int LUPDecompose(float A[4][4], int N, double Tol, int *P) {

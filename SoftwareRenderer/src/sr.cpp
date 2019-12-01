@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 	Vec3f origin = { 0.0f, 0.0f, 0.0f };
 
 	PerspectiveCamera cameraP(0.1f, 1000.0f, (float)M_PI / 3);
-	FreeCamera camera(0.1f, 100.0f, M_PI / 4, Vec3f({ 0.0f, 0.0f, 6.0f }));
+	FreeCamera camera(0.1f, 100.0f, 45.0f, Vec3f({ 0.0f, 0.0f, 6.0f }));
 
 	while (globalRunning) {
 		float timeEllapsed = fpsLock.milliElapsed();
@@ -74,15 +74,8 @@ int main(int argc, char **argv) {
 		clearZBuffer(camera.farClippingPlane);
 		clearImBuffer(Color(255 * 0.6f, 255 * 0.3f, 255 * 0.2f));
 
-		// Camera
-		// cameraP.position = cameraP.staticPosition * translate(0.0f, 0.0f, 2.0f) * rotate(cameraAngleAlpha, cameraAngleBeta, 0);
-		// cameraP.lookAt(origin);
-
-		//camera.position = { 0.0f, 0.0f, 3.0f };
-		//if (camera.yaw >= 1.5 * M_PI) {
-		//	camera.yaw = -M_PI / 2;
-		//}
 		camera.processMouseInput(mouse.x, mouse.y, deltaTime);
+		camera.processMouseScrolling(mouse);
 		camera.lookAt();
 
 		Mat4f vp = camera.view * camera.project();
@@ -107,15 +100,6 @@ int main(int argc, char **argv) {
 				normals[j] = norm(model.triNorm(i, j) * inverse(transpose(modelTransform)));
 				viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
 			}
-			//if (triVert[0].x > render.imagebuffer.width || triVert[0].x < 0.0f || triVert[0].y > render.imagebuffer.height || triVert[0].y < 0.0f || triVert[0].z < 0.0f || triVert[0].z > 1.0f) {
-			//	continue;
-			//}
-			//if (triVert[1].x > render.imagebuffer.width || triVert[1].x < 0.0f || triVert[1].y > render.imagebuffer.height || triVert[1].y < 0.0f || triVert[1].z < 0.0f || triVert[1].z > 1.0f) {
-			//	continue;
-			//}
-			//if (triVert[2].x > render.imagebuffer.width || triVert[2].x < 0.0f || triVert[2].y > render.imagebuffer.height || triVert[2].y < 0.0f || triVert[2].z < 0.0f || triVert[2].z > 1.0f) {
-			//	continue;
-			//}
 			rasterize(triVert, normals, render.models[0]->texture, textureUV);
 		}
 		render.imagebuffer.flip_vertically();

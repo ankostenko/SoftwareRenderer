@@ -23,6 +23,7 @@ enum KeyBindings {
 struct Mouse {
 	int x;
 	int y;
+	float wheelFOV;
 };
 
 Mouse mouse;
@@ -113,6 +114,18 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 		case WM_MOUSEMOVE: {
 			mouse.x = GET_X_LPARAM(msg.lParam);
 			mouse.y = GET_Y_LPARAM(msg.lParam);
+		} break;
+		case WM_MOUSEWHEEL: {
+			int scroll = GET_WHEEL_DELTA_WPARAM(msg.wParam);
+			float wheelSensitivity = 1.0f;
+
+			mouse.wheelFOV += (float)scroll / fabs(scroll) * wheelSensitivity;
+			if (mouse.wheelFOV >= 45.0f) {
+				mouse.wheelFOV = 45.0f;
+			}
+			if (mouse.wheelFOV <= 1.0f) {
+				mouse.wheelFOV = 1.0f;
+			}
 		} break;
 		// Keyboard
 		case WM_KEYUP:
