@@ -44,6 +44,7 @@ struct FreeCamera {
 
 	FreeCamera(float nearPlane, float farPlane, float fov, Vec3f pos = Vec3f({ 3.0f, 0.0f, 3.0f })) : position(pos), fov(fov), nearClippingPlane(nearPlane),
 		farClippingPlane(farPlane), worldUp(Vec3f({ 0.0f, 1.0f, 0.0f })) {
+		mouse.wheelFOV = fov;
 		updateVectors();
 	}
 
@@ -53,7 +54,7 @@ struct FreeCamera {
 	}
 
 	Mat4f project() {
-		proj = projection(fov, render.imagebuffer.width / (float)render.imagebuffer.height, nearClippingPlane, farClippingPlane);
+		proj = projection(radians(fov), render.imagebuffer.width / (float)render.imagebuffer.height, nearClippingPlane, farClippingPlane);
 		return proj;
 	}
 	
@@ -66,6 +67,10 @@ struct FreeCamera {
 
 		lastMouseX = newMouseX;
 		lastMouseY = newMouseY;
+	}
+
+	void processMouseScrolling(Mouse mouse) {
+		fov = mouse.wheelFOV;
 	}
 
 	void updateVectors() {
