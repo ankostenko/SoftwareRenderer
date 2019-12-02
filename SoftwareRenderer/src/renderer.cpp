@@ -204,3 +204,21 @@ void initRenderer(int width, int height, Vec3f lightDir) {
 	render.light.intensity = 3.5f;
 	render.light.color = white;
 }
+
+void drawModel(Model &model, Mat4f &modelTransform, Mat4f &view, Mat4f &projection) {
+	Mat4f combinedTransform = modelTransform * view * projection;
+	
+	for (int i = 0; i < model.facesNumber(); i++) {
+		Vec3f triVert[3];
+		Vec3f textureUV[3];
+		Vec3f normals[3];
+
+		for (int j = 0; j < 3; j++) {
+			triVert[j] = model.triVert(i, j) * combinedTransform;
+			textureUV[j] = model.triUV(i, j);
+			normals[j] = norm(model.triNorm(i, j) * inverse(transpose(modelTransform)));
+			viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
+		}
+		rasterize(triVert, normals, render.models[0]->texture, textureUV);
+	}
+}

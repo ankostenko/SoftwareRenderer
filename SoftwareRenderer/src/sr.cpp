@@ -89,28 +89,16 @@ int main(int argc, char **argv) {
 
 		Mat4f vp = camera.view * camera.project();
 
-		Vec3f rX = X * vp;
-		Vec3f rY = Y * vp;
-		Vec3f rZ = Z * vp;
 		Vec3f rOrigin = origin * vp;
 
-		drawLine(rOrigin, rX, red);
-		drawLine(rOrigin, rY, green);
-		drawLine(rOrigin, rZ, blue);
-		for (int i = 0; i < model.facesNumber(); i++) {
-			Vec3f triVert[3];
-			Vec3f textureUV[3];
-			Vec3f normals[3];
+		drawLine(rOrigin, X * vp, red);
+		drawLine(rOrigin, Y * vp, green);
+		drawLine(rOrigin, Z * vp, blue);
 
-			Mat4f modelTransform = translate(0.0, 0.0f, 0.0f) * scale(scaleVariable) * scaleY(1.0f) * rotate(angleAlpha, angleBeta, angleGamma);
-			for (int j = 0; j < 3; j++) {
-				triVert[j] = model.triVert(i, j) * modelTransform * vp;
-				textureUV[j] = model.triUV(i, j);
-				normals[j] = norm(model.triNorm(i, j) * inverse(transpose(modelTransform)));
-				viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
-			}
-			rasterize(triVert, normals, render.models[0]->texture, textureUV);
-		}
+		Mat4f modelTransform = translate(0.0f, 0.0f, 0.0f);
+		Mat4f proj = camera.project();
+		drawModel(model, modelTransform, camera.view, camera.proj);
+
 		render.imagebuffer.flip_vertically();
 		Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
 
