@@ -359,7 +359,7 @@ Mat4f inverse(Mat4f mat) {
 	return inverted;
 }
 
-Mat4f transpose(Mat4f &mat) {
+Mat4f transpose(Mat4f mat) {
 	Mat4f ret = { };
 
 	for (int i = 0; i < 4; i++) {

@@ -1,7 +1,7 @@
 #pragma once
 
 struct LightSource {
-	Vec3f direction;
+	Vec3f position;
 	Color color = Color(255, 255, 255);
 	float intensity;
 };

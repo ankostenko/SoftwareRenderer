@@ -11,10 +11,16 @@ public:
 		m_StartTime = std::chrono::high_resolution_clock::now();
 	}
 
-	inline float milliElapsed() {
+	float milliElapsed() {
 		m_EndTime = std::chrono::high_resolution_clock::now();
 		m_Duration = m_EndTime - m_StartTime;
 		return m_Duration.count();
+	}
+
+	float secondsElapsed() {
+		m_EndTime = std::chrono::high_resolution_clock::now();
+		m_Duration = m_EndTime - m_StartTime;
+		return m_Duration.count() / 1000;
 	}
 
 	void ResetStartTime() {

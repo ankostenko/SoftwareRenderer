@@ -68,7 +68,7 @@ float edgeFunction(const Vec3f &a, const Vec3f &b, const Vec3f &c) {
 }
 
 #define DEBUG_HAS_TEXTURE 0
-void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
+void rasterize(Vec3f *triVert, IShader &shader) {
 	// z-cullling
 	if (triVert[0].z < -1.0f || triVert[0].z > 1.0f) { return; }
 	if (triVert[1].z < -1.0f || triVert[1].z > 1.0f) { return; }
@@ -83,10 +83,6 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 	uv[1] = uv[1] * triVert[1].z;
 	uv[2] = uv[2] * triVert[2].z;
 #endif
-	//int minX = 0;
-	//int minY = 0;
-	//int maxX = render.imagebuffer.width;
-	//int maxY = render.imagebuffer.height;
 
 	// Find "border" box
 	int minX = triVert[0].x;
@@ -145,17 +141,14 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 					// TODO: Investigate what the hell is going on with texture mapping
 					// Texture mapping works only after transformations done by MeshLab
 					// It outputs completely different mapping and it does something but I'm not sure what
-					Vec3f normal = normals[0] * w0 + normals[1] * w1 + normals[2] * w2;
-					normal = normal * z;
-					normal.normalize();
+					//Vec3f normal = normals[0] * w0 + normals[1] * w1 + normals[2] * w2;
+					//normal = normal * z;
+					//normal.normalize();
 
 					// Program counts properties of a material and light to render a shaded point
-					float albedo = 1.0f;
-					char r = render.light.color.r * (clampMinMax(0.25f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal))));
-					char g = render.light.color.g * (clampMinMax(0.25f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal))));
-					char b = render.light.color.b * (clampMinMax(0.25f, 1.0f, albedo / M_PI * render.light.intensity * maxf(0.0f, (render.light.direction * normal))));
-					Color hitColor(r, g, b);
-
+					//char r = render.light.color.r * (clampMinMax(0.25f, 1.0f, render.light.intensity * maxf(0.0f, (render.light.direction * normal))));
+					//char g = render.light.color.g * (clampMinMax(0.25f, 1.0f, render.light.intensity * maxf(0.0f, (render.light.direction * normal))));
+					//char b = render.light.color.b * (clampMinMax(0.25f, 1.0f, render.light.intensity * maxf(0.0f, (render.light.direction * normal))));
 #if DEBUG_HAS_TEXTURE
 					Vec3f uvC = uv[0] * w0 + uv[1] * w1 + uv[2] * w2;
 					uvC = uvC * z;
@@ -166,7 +159,11 @@ void rasterize(Vec3f *triVert, Vec3f *normals, Texture texture, Vec3f *uv) {
 					//color.g *= intensity;
 					//color.b *= intensity;
 #else
-					Color color(hitColor);
+					Vec3f resColor = shader.fragment();
+					resColor.x = clampMin(0.0f, resColor.x);
+					resColor.y = clampMin(0.0f, resColor.y);
+					resColor.z = clampMin(0.0f, resColor.z);
+					Color color(resColor.x, resColor.y, resColor.z);
 #endif
 					render.imagebuffer.set(x, y, color);
 				}
@@ -200,7 +197,7 @@ void initRenderer(int width, int height, Vec3f lightDir) {
 	render.numberOfModels = 0;
 	render.zbuffer = new float[width * height];
 
-	render.light.direction = norm(lightDir);
+	render.light.position = norm(lightDir);
 	render.light.intensity = 3.5f;
 	render.light.color = white;
 }
@@ -219,6 +216,26 @@ void drawModel(Model &model, Mat4f &modelTransform, Mat4f &view, Mat4f &projecti
 			normals[j] = norm(model.triNorm(i, j) * inverse(transpose(modelTransform)));
 			viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
 		}
-		rasterize(triVert, normals, render.models[0]->texture, textureUV);
+		//rasterize(triVert, normals, render.models[0]->texture, textureUV);
+	}
+}
+
+void drawModel(Model &model, IShader &shader) {
+	for (int i = 0; i < model.facesNumber(); i++) {
+		Vec3f triVert[3];
+		Vec3f textureUV[3];
+		Vec3f normals[3];
+
+		for (int j = 0; j < 3; j++) {
+			triVert[j] = model.triVert(i, j);
+			normals[j] = model.triNorm(i, j);
+			triVert[j] = shader.vertex(triVert[j], render.light.position, normals[j]);
+			viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
+		//	triVert[j] = model.triVert(i, j) * combinedTransform;
+		//	textureUV[j] = model.triUV(i, j);
+		//	normals[j] = norm(model.triNorm(i, j) * inverse(transpose(modelTransform)));
+		//	viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
+		}
+		rasterize(triVert, shader);
 	}
 }
