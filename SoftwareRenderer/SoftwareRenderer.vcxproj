@@ -99,6 +99,7 @@
     <ClInclude Include="src\Model.h" />
     <ClInclude Include="src\parseOBJ.h" />
     <ClInclude Include="src\renderer.h" />
+    <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\srmath.h" />
     <ClInclude Include="src\winlayer.h" />
   </ItemGroup>
