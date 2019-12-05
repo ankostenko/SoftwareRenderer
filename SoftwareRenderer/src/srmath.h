@@ -99,6 +99,10 @@ struct Vec3f {
 		y = y / (sqrt(x * x + y * y + z * z));
 		z = z / (sqrt(x * x + y * y + z * z));
 	}
+
+	Vec3f operator-() {
+		return { -x, -y, -z };
+	}
 };
 
 struct Vec3i {
@@ -174,8 +178,7 @@ T cross(T v0, T v1) {
 	return { v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x };
 }
 
-template<typename T>
-Vec3f norm(T vec) {
+Vec3f norm(Vec3f vec) {
 	float length = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 	return { vec.x / length, vec.y / length, vec.z / length };
 }
@@ -278,6 +281,14 @@ float radians(float degrees) {
 
 float degrees(float radians) {
 	return radians * 180 / M_PI;
+}
+
+float dot(Vec3f v0, Vec3f v1) {
+	return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z;
+}
+
+Vec3f reflect(Vec3f I, Vec3f N) {
+	return I - (N * dot(I, N) * 2.0f);
 }
 
 int LUPDecompose(float A[4][4], int N, double Tol, int *P) {

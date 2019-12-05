@@ -159,10 +159,10 @@ void rasterize(Vec3f *triVert, IShader &shader) {
 					//color.g *= intensity;
 					//color.b *= intensity;
 #else
-					Vec3f resColor = shader.fragment();
-					resColor.x = clampMin(0.0f, resColor.x);
-					resColor.y = clampMin(0.0f, resColor.y);
-					resColor.z = clampMin(0.0f, resColor.z);
+					Vec3f resColor = shader.fragment(w0, w1, w2, z);
+					resColor.x = clampMinMax(0.0f, 255.0f, resColor.x);
+					resColor.y = clampMinMax(0.0f, 255.0f, resColor.y);
+					resColor.z = clampMinMax(0.0f, 255.0f, resColor.z);
 					Color color(resColor.x, resColor.y, resColor.z);
 #endif
 					render.imagebuffer.set(x, y, color);
@@ -229,12 +229,8 @@ void drawModel(Model &model, IShader &shader) {
 		for (int j = 0; j < 3; j++) {
 			triVert[j] = model.triVert(i, j);
 			normals[j] = model.triNorm(i, j);
-			triVert[j] = shader.vertex(triVert[j], render.light.position, normals[j]);
+			triVert[j] = shader.vertex(triVert[j], normals[j], render.light.position, j);
 			viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
-		//	triVert[j] = model.triVert(i, j) * combinedTransform;
-		//	textureUV[j] = model.triUV(i, j);
-		//	normals[j] = norm(model.triNorm(i, j) * inverse(transpose(modelTransform)));
-		//	viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
 		}
 		rasterize(triVert, shader);
 	}
