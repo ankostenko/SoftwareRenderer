@@ -31,6 +31,8 @@ int imageHeight = 600;
 
 FlatShader flatShader;
 LightShader lightShader;
+GourardShader gourardShader;
+MyShader myshader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
@@ -38,7 +40,7 @@ int main(int argc, char **argv) {
 
 	Model light;
 
-	loadModel(model, "models\\cube.obj");
+	loadModel(model, "models\\sphere.obj");
 	loadModel(light, "models\\sphere.obj");
 	normalizeModelCoords(model);
 	normalizeModelCoords(light);
@@ -62,6 +64,7 @@ int main(int argc, char **argv) {
 	int cameraRightDirection = 0;
 
 	Timer fpsLock;
+	Timer tm;
 
 	// World coordinate system
 	Vec3f X = { 1.0f, 0.0f, 0.0f };
@@ -77,7 +80,8 @@ int main(int argc, char **argv) {
 		float currentFrame = fpsLock.secondsElapsed();
 		float deltaTime = currentFrame - lastFrame;
 
-		if (deltaTime > 0.016f) {
+		if (deltaTime > 0.033f) {
+			tm.ResetStartTime();
 			//std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(16.0f - timeEllapsed));
 			lastFrame = currentFrame;
 
@@ -105,25 +109,37 @@ int main(int argc, char **argv) {
 
 			Mat4f modelTransform = translate(0.0f, 0.0f, 0.0f) * rotate(angleAlpha, 0, 0);
 			Mat4f proj = camera.project();
-			//drawModel(model, modelTransform, camera.view, camera.proj);
 
 			// Light Movement
-			render.light.position.x = 500 * sin(fpsLock.secondsElapsed()) * deltaTime;
-			render.light.position.y = 0.0f;
-			render.light.position.z = 500 * cos(fpsLock.secondsElapsed()) * deltaTime;
+			render.light.position.x = 500 * sin(fpsLock.secondsElapsed() / 2) * deltaTime;
+			render.light.position.y = 5.0f;
+			render.light.position.z = 500 * cos(fpsLock.secondsElapsed() / 2) * deltaTime;
 			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.2f);
 			lightShader.uniform_MVP = lightTransform * vp;
 			drawModel(light, lightShader); 
-			 
-			flatShader.uniform_VP = vp;
-			flatShader.uniform_M = modelTransform;
-			drawModel(model, flatShader);
+			
+			// Model shader
+			//myshader.uniform_M = modelTransform;
+			//myshader.uniform_VP = vp;
+			//drawModel(model, myshader);
+			
+			//flatShader.uniform_VP = vp;
+			//flatShader.uniform_M = modelTransform;
+			//drawModel(model, flatShader); 
+
+			gourardShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
+			gourardShader.uniform_M = modelTransform;
+			gourardShader.uniform_VP = vp;
+			gourardShader.uniform_ObjColor = { 0.0f, 102.0f, 204.0f };
+			gourardShader.uniform_LightPos = render.light.position;
+			drawModel(model, gourardShader);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
+			
 
 			char buffer[64];
-			sprintf(buffer, "%f ms\n", deltaTime);
+			sprintf(buffer, "%f ms Draw time: %f\n", deltaTime * 1000, tm.milliElapsed());
 			OutputDebugStringA(buffer);
 		}
 	}
