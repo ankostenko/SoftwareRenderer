@@ -22,32 +22,9 @@ struct FlatShader : IShader {
 	}
 };
 
-struct MyShader : IShader {
+struct PhongShader : IShader {
 	Mat4f uniform_M;
-	Mat4f uniform_VP;
-	Vec3f lightPos;
-	Vec3f Normals[3];
-	Vec3f rgb = { 25, 25, 25 };
-	Vec3f oldVector = { 0, 0, 0 };
-
-	virtual Vec3f vertex(Vec3f vert, Vec3f normal, Vec3f light, int index) override {
-		Normals[index] = norm(normal * transpose(inverse(uniform_M)));
-		lightPos = light;
-		return vert * uniform_M * uniform_VP;
-	}
-
-	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {
-		Vec3f interpNormal = Normals[0] * w0 + Normals[1] * w1 + Normals[2] * w2;
-		interpNormal.normalize();
-
-		float intensity = clampMin(0.0f, interpNormal * lightPos);
-
-		return rgb * intensity;
-	}
-};
-
-struct GourardShader : IShader {
-	Mat4f uniform_M;
+	Mat4f uniform_MTI;
 	Mat4f uniform_VP;
 	Vec3f uniform_ObjColor;
 	Vec3f uniform_LightColor;
@@ -55,10 +32,9 @@ struct GourardShader : IShader {
 	Vec3f uniform_LightPos;
 	Vec3f Normal[3];
 	Vec3f fragPos[3];
-	float varying_intensity[3];
 
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, Vec3f light, int index) override {
-		Normal[index] = norm(normal * transpose(inverse(uniform_M)));
+		Normal[index] = norm(normal * uniform_MTI);
 		fragPos[index] = vert * uniform_M;
 
 		return vert * uniform_M * uniform_VP;
@@ -71,17 +47,17 @@ struct GourardShader : IShader {
 		Vec3f lightDir = norm(uniform_LightPos - interpFragPos);
 
 		// Ambient
-		float ambientStrength = 0.1;
+		float ambientStrength = 0.5f;
 		Vec3f ambient = uniform_LightColor * ambientStrength;
 
 		// Diffuse
 		float diff = clampMin(0.0f, dot(interpNormal, lightDir));
-		Vec3f diffuse = uniform_LightColor * diff;
+		Vec3f diffuse = uniform_LightColor * diff * 0.9f;
 
 		// Specular
-		float specularStrength = 0.5;
+		float specularStrength = 0.9f;
 		Vec3f viewDir = norm(uniform_ViewPos - interpFragPos);
-		Vec3f reflectDir = reflect(lightDir, interpNormal);
+		Vec3f reflectDir = reflect(-lightDir, interpNormal);
 		float spec = pow(clampMin(0.0f, dot(viewDir, reflectDir)), 32);
 		Vec3f specular = uniform_LightColor * specularStrength * spec;
 

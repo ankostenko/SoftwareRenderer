@@ -287,8 +287,8 @@ float dot(Vec3f v0, Vec3f v1) {
 	return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z;
 }
 
-Vec3f reflect(Vec3f I, Vec3f N) {
-	return I - (N * dot(I, N) * 2.0f);
+Vec3f reflect(Vec3f L, Vec3f N) {
+	return (N * dot(L, N) * 2.0f) - L;
 }
 
 int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
@@ -339,9 +339,9 @@ int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
 	return 1;  //decomposition done 
 }
 
-void LUPInvert(float A[4][4], int *P, int N, float IA[4][4]) {
-	for (int j = 0; j < N; j++) {
-		for (int i = 0; i < N; i++) {
+void LUPInvert(float A[4][4], float IA[4][4], int *P) {
+	for (int j = 0; j < 4; j++) {
+		for (int i = 0; i < 4; i++) {
 			if (P[i] == j)
 				IA[i][j] = 1.0;
 			else
@@ -351,8 +351,8 @@ void LUPInvert(float A[4][4], int *P, int N, float IA[4][4]) {
 				IA[i][j] -= A[i][k] * IA[k][j];
 		}
 
-		for (int i = N - 1; i >= 0; i--) {
-			for (int k = i + 1; k < N; k++)
+		for (int i = 4 - 1; i >= 0; i--) {
+			for (int k = i + 1; k < 4; k++)
 				IA[i][j] -= A[i][k] * IA[k][j];
 
 			IA[i][j] = IA[i][j] / A[i][i];
@@ -365,7 +365,7 @@ Mat4f inverse(Mat4f mat) {
 	int P[32];
 
 	LUPDecompose(mat.mat, 4, 1e-5, P);
-	LUPInvert(mat.mat, P, 4, inverted.mat);
+	LUPInvert(mat.mat, inverted.mat, P);
 
 	return inverted;
 }

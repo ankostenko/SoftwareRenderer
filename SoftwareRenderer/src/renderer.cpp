@@ -105,10 +105,13 @@ void rasterize(Vec3f *triVert, IShader &shader) {
 		}
 	}
 
-	if (minY < 0) { return; }
-	if (minX < 0) { return; }
-	if (maxY > render.imagebuffer.height) { return; }
-	if (maxX > render.imagebuffer.width)  { return; }
+	int width = render.imagebuffer.width;
+	int height = render.imagebuffer.height;
+	if ((triVert[0].x > width || triVert[0].x < 0 || triVert[0].y > height || triVert[0].y < 0) &&
+		(triVert[1].x > width || triVert[1].x < 0 || triVert[1].y > height || triVert[1].y < 0) &&
+		(triVert[2].x > width || triVert[2].x < 0 || triVert[2].y > height || triVert[2].y < 0)) {
+		return;
+	}
 
 	float area = edgeFunction(triVert[0], triVert[1], triVert[2]);
 	if (area <= 0) {
