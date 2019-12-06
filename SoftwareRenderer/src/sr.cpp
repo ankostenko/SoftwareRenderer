@@ -24,15 +24,13 @@ bool globalRunning = true;
 bool globalPause = false;
 
 Model model;
-//OrthographicCamera camera(0.1, 1000.0f, (float)M_PI / 3);
 
 int imageWidth = 800;
 int imageHeight = 600;
 
 FlatShader flatShader;
 LightShader lightShader;
-GourardShader gourardShader;
-MyShader myshader;
+PhongShader phongShader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
@@ -40,7 +38,7 @@ int main(int argc, char **argv) {
 
 	Model light;
 
-	loadModel(model, "models\\sphere.obj");
+	loadModel(model, "models\\teapot.obj");
 	loadModel(light, "models\\sphere.obj");
 	normalizeModelCoords(model);
 	normalizeModelCoords(light);
@@ -101,38 +99,34 @@ int main(int argc, char **argv) {
 
 			Mat4f vp = camera.view * camera.project();
 
-			Vec3f rOrigin = origin * vp;
-
-			drawLine(rOrigin, X * vp, red);
-			drawLine(rOrigin, Y * vp, green);
-			drawLine(rOrigin, Z * vp, blue);
+			//Vec3f rOrigin = origin * vp;
+			//drawLine(rOrigin, X * vp, red);
+			//drawLine(rOrigin, Y * vp, green);
+			//drawLine(rOrigin, Z * vp, blue);
 
 			Mat4f modelTransform = translate(0.0f, 0.0f, 0.0f) * rotate(angleAlpha, 0, 0);
 			Mat4f proj = camera.project();
 
 			// Light Movement
-			render.light.position.x = 500 * sin(fpsLock.secondsElapsed() / 2) * deltaTime;
-			render.light.position.y = 5.0f;
-			render.light.position.z = 500 * cos(fpsLock.secondsElapsed() / 2) * deltaTime;
+			render.light.position.y = 7.0f;
+			render.light.position.x = 200 * sin(fpsLock.secondsElapsed() / 2) * deltaTime;
+			render.light.position.z = 200 * cos(fpsLock.secondsElapsed() / 2) * deltaTime;
 			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.2f);
 			lightShader.uniform_MVP = lightTransform * vp;
 			drawModel(light, lightShader); 
 			
-			// Model shader
-			//myshader.uniform_M = modelTransform;
-			//myshader.uniform_VP = vp;
-			//drawModel(model, myshader);
-			
+			// Model shader			
 			//flatShader.uniform_VP = vp;
 			//flatShader.uniform_M = modelTransform;
 			//drawModel(model, flatShader); 
 
-			gourardShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
-			gourardShader.uniform_M = modelTransform;
-			gourardShader.uniform_VP = vp;
-			gourardShader.uniform_ObjColor = { 0.0f, 102.0f, 204.0f };
-			gourardShader.uniform_LightPos = render.light.position;
-			drawModel(model, gourardShader);
+			phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
+			phongShader.uniform_M = modelTransform;
+			phongShader.uniform_MTI = transpose(inverse(modelTransform));
+			phongShader.uniform_VP = vp;
+			phongShader.uniform_ObjColor = { 0.0f, 102.0f, 204.0f };
+			phongShader.uniform_LightPos = render.light.position;
+			drawModel(model, phongShader);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
