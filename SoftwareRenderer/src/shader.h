@@ -12,8 +12,8 @@ struct FlatShader : IShader {
 	Vec3f rgb = { 255.0f, 255.0f, 255.0f };
 
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, Vec3f light, int index) override {
-		normal = norm(normal * transpose(uniform_M));
-		varIntensity = clampMin(0.0f, normal * light);
+		normal = norm(normal * uniform_M);
+		varIntensity = clampMin(0.0f, normal * norm(light));
 		return vert * uniform_M * uniform_VP;
 	}
 
@@ -34,20 +34,20 @@ struct PhongShader : IShader {
 	Vec3f fragPos[3];
 
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, Vec3f light, int index) override {
-		Normal[index] = norm(normal * uniform_MTI);
-		fragPos[index] = vert * uniform_M;
+		Normal[index] = norm(normal * uniform_M);
+		fragPos[index] = norm(vert * uniform_M);
 
 		return vert * uniform_M * uniform_VP;
 	}
 
 	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {
 		Vec3f interpNormal = norm(Normal[0] * w0 + Normal[1] * w1 + Normal[2] * w2);
+		Vec3f interpFragPos = norm(fragPos[0] * w0 + fragPos[1] * w1 + fragPos[2] * w2);
 		
-		Vec3f interpFragPos = fragPos[0] * w0 + fragPos[1] * w1 + fragPos[2] * w2;
 		Vec3f lightDir = norm(uniform_LightPos - interpFragPos);
 
 		// Ambient
-		float ambientStrength = 0.5f;
+		float ambientStrength = 0.4f;
 		Vec3f ambient = uniform_LightColor * ambientStrength;
 
 		// Diffuse
@@ -55,10 +55,10 @@ struct PhongShader : IShader {
 		Vec3f diffuse = uniform_LightColor * diff * 0.9f;
 
 		// Specular
-		float specularStrength = 0.9f;
+		float specularStrength = 0.3f;
+		Vec3f reflectDir = reflect(lightDir, interpNormal);
 		Vec3f viewDir = norm(uniform_ViewPos - interpFragPos);
-		Vec3f reflectDir = reflect(-lightDir, interpNormal);
-		float spec = pow(clampMin(0.0f, dot(viewDir, reflectDir)), 32);
+		float spec = pow(clampMin(0.0f, dot(reflectDir, viewDir)), 16);
 		Vec3f specular = uniform_LightColor * specularStrength * spec;
 
 		Vec3f result = {  };

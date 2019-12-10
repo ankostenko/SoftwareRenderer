@@ -18,6 +18,11 @@ enum KeyBindings {
 	W_BUTTON = 0x57,
 	Q_BUTTON = 0x51,
 	E_BUTTON = 0x45,
+	// Player
+	T_BUTTON = 0x54,
+	F_BUTTON = 0x46,
+	G_BUTTON = 0x47,
+	H_BUTTON = 0x48,
 };
 
 extern bool globalRunning;
@@ -38,6 +43,13 @@ struct Mouse {
 };
 
 struct Mouse mouse = { buffer_width / 2, buffer_height / 2 };
+
+struct Player {
+	int y;
+	int x;
+};
+
+struct Player player = { 0, 0 };
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
@@ -199,6 +211,18 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 					}
 					else if (vkCode == P_BUTTON) {
 						globalPause = !globalPause;
+					}
+					else if (vkCode == T_BUTTON) {
+						player.y += 1;
+					}
+					else if (vkCode == G_BUTTON) {
+						player.y -= 1;
+					}
+					else if (vkCode == F_BUTTON) {
+						player.x += 1;
+					}
+					else if (vkCode == H_BUTTON) {
+						player.x -= 1;
 					}
 				}
 			} break;

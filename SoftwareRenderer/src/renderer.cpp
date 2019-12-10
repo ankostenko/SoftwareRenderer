@@ -163,9 +163,9 @@ void rasterize(Vec3f *triVert, IShader &shader) {
 					//color.b *= intensity;
 #else
 					Vec3f resColor = shader.fragment(w0, w1, w2, z);
-					resColor.x = clampMinMax(0.0f, 255.0f, resColor.x);
-					resColor.y = clampMinMax(0.0f, 255.0f, resColor.y);
-					resColor.z = clampMinMax(0.0f, 255.0f, resColor.z);
+					resColor.x = clampMinMax(0, 255, resColor.x);
+					resColor.y = clampMinMax(0, 255, resColor.y);
+					resColor.z = clampMinMax(0, 255, resColor.z);
 					Color color(resColor.x, resColor.y, resColor.z);
 #endif
 					render.imagebuffer.set(x, y, color);

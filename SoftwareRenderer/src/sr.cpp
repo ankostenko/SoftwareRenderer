@@ -38,7 +38,16 @@ int main(int argc, char **argv) {
 
 	Model light;
 
-	loadModel(model, "models\\teapot.obj");
+	Model model1;
+	Model model2;
+	Model model3;
+	Model model4;
+
+	loadModel(model1, "models\\cube.obj");
+	normalizeModelCoords(model1);
+	loadModel(model2, "models\\spaceship.obj");
+	normalizeModelCoords(model2);
+
 	loadModel(light, "models\\sphere.obj");
 	normalizeModelCoords(model);
 	normalizeModelCoords(light);
@@ -78,9 +87,12 @@ int main(int argc, char **argv) {
 		float currentFrame = fpsLock.secondsElapsed();
 		float deltaTime = currentFrame - lastFrame;
 
+		if (deltaTime < 0.033f) {
+			std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(0.033f - currentFrame));
+		}
+
 		if (deltaTime > 0.033f) {
 			tm.ResetStartTime();
-			//std::this_thread::sleep_for(std::chrono::duration<float, std::milli>(16.0f - timeEllapsed));
 			lastFrame = currentFrame;
 
 			cameraForwardDirection = 0;
@@ -99,34 +111,30 @@ int main(int argc, char **argv) {
 
 			Mat4f vp = camera.view * camera.project();
 
-			//Vec3f rOrigin = origin * vp;
-			//drawLine(rOrigin, X * vp, red);
-			//drawLine(rOrigin, Y * vp, green);
-			//drawLine(rOrigin, Z * vp, blue);
-
-			Mat4f modelTransform = translate(0.0f, 0.0f, 0.0f) * rotate(angleAlpha, 0, 0);
-			Mat4f proj = camera.project();
+			Mat4f modelTransform1 = translate(0.0f, 0.0f, 0.0f) * rotate(angleAlpha, 0, 0) * scale(2.0f);
+			Mat4f modelTransform2 = translate(0.0f, 1.5f, 0.0f) * rotate(angleAlpha, 0, 0);
+			Mat4f modelTransform3 = translate(1.5f, 0.0f, 0.0f) * rotate(angleAlpha, 0, 0);
+			Mat4f modelTransform4 = translate(1.5f, 1.5f, 0.0f) * rotate(angleAlpha, 0, 0);
 
 			// Light Movement
-			render.light.position.y = 7.0f;
-			render.light.position.x = 200 * sin(fpsLock.secondsElapsed() / 2) * deltaTime;
-			render.light.position.z = 200 * cos(fpsLock.secondsElapsed() / 2) * deltaTime;
+			render.light.position.y = 0.0f;
+			//render.light.position.x = 1000 * sin(fpsLock.secondsElapsed() / 2) * deltaTime;
+			//render.light.position.z = 1000 * cos(fpsLock.secondsElapsed() / 2) * deltaTime;
+			render.light.position.x = 7.0f;
+			render.light.position.z = 7.0f;
 			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.2f);
 			lightShader.uniform_MVP = lightTransform * vp;
 			drawModel(light, lightShader); 
 			
-			// Model shader			
-			//flatShader.uniform_VP = vp;
-			//flatShader.uniform_M = modelTransform;
-			//drawModel(model, flatShader); 
-
+			// Model shader
+			phongShader.uniform_M = modelTransform1;
+			phongShader.uniform_MTI = transpose(inverse(modelTransform3));
+			phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
 			phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
-			phongShader.uniform_M = modelTransform;
-			phongShader.uniform_MTI = transpose(inverse(modelTransform));
-			phongShader.uniform_VP = vp;
-			phongShader.uniform_ObjColor = { 0.0f, 102.0f, 204.0f };
+			phongShader.uniform_ViewPos = camera.position;
 			phongShader.uniform_LightPos = render.light.position;
-			drawModel(model, phongShader);
+			phongShader.uniform_VP = vp;
+			drawModel(model2, phongShader);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
