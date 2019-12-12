@@ -13,14 +13,11 @@ struct Bullet {
 	float y;
 };
 
+struct Asteroid {
+	bool available;
+	Vec3f direction;
+	float x;
+	float y;
+};
+
 Player player;
-const int MOVEMENT_SPEED = 0.9f;
-
-void UpdatePosition(int direction) {
-	player.x += player.front.x * direction * MOVEMENT_SPEED;
-	player.y += player.front.y * direction * MOVEMENT_SPEED;
-}
-
-void Game() {
-	UpdatePosition(layer.direction);
-}

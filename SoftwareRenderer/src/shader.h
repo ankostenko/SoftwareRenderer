@@ -14,7 +14,7 @@ struct FlatShader : IShader {
 
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, int index) override {
 		normal = norm(normal * uniform_M);
-		//varIntensity = clampMin(0.0f, normal * norm(uniform_LightPos));
+		varIntensity = clampMin(0.0f, normal * norm(uniform_LightPos));
 		return vert * uniform_M * uniform_VP;
 	}
 

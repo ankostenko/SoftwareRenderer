@@ -110,8 +110,11 @@ void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angleGamma, int &forwardDirection, int &rightDirection, float &scaleVariable, float deltaTime) {
 	MSG msg;
 
-	if (GetAsyncKeyState(T_BUTTON)) {
+	if (GetAsyncKeyState(W_BUTTON)) {
 		layer.direction = 1;
+	}
+	if (GetAsyncKeyState(S_BUTTON)) {
+		layer.direction = -1;
 	}
 	if (GetAsyncKeyState(A_BUTTON)) {
 		angleBeta -= M_PI * deltaTime;
