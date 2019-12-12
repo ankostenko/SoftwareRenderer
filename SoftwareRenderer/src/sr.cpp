@@ -40,11 +40,14 @@ int main(int argc, char **argv) {
 	Model light;
 	Model model1;
 	Model bullet;
+	Model asteroid;
 
 	loadModel(model1, "models\\spaceship.obj");
 	normalizeModelCoords(model1);
 	loadModel(bullet, "models\\sphere.obj");
 	normalizeModelCoords(bullet);
+	loadModel(asteroid, "models\\asteroid.obj");
+	normalizeModelCoords(asteroid);
 
 	loadModel(light, "models\\sphere.obj");
 	normalizeModelCoords(light);
@@ -81,6 +84,8 @@ int main(int argc, char **argv) {
 	Mat4f shipTransform = { };
 
 	std::vector<Bullet> bullets;
+	std::vector<Asteroid> asteroids;
+	asteroids.push_back(Asteroid({ false, Vec3f({ 1.0f, 0.0f, 0.0 }), 0, 0 }));
 
 	float lastFrame = 0.0f;
 	while (globalRunning) {
@@ -109,11 +114,8 @@ int main(int argc, char **argv) {
 			camera.updateVectors();
 			camera.lookAt();
 			
-			// Game simulation
-			//Game();
-
 			Mat4f vp = camera.view * camera.project();
-			shipTransform = transpose(rotateY(angleBeta)) * scale(5.0f) * translate(player.x, 0.0f, player.y);
+			shipTransform = transpose(rotateY(angleBeta)) * scale(3.0f) * translate(player.x, 0.0f, player.y);
 
 			// World Coordinate system
 			drawLine(origin * vp, X * vp, red);
@@ -157,30 +159,47 @@ int main(int argc, char **argv) {
 				drawModel(bullet, flatShader);
 			}
 
+			// Asteroid's movement
+			for (int index = 0; index < asteroids.size(); index++) {
+				Asteroid &ast = asteroids[index];
+				// Move an asteroid
+				if (!ast.available) {
+					ast.x += ast.direction.x * deltaTime * 2.0f;
+					ast.y += ast.direction.y * deltaTime * 2.0f;
+
+					Mat4f astTransform = translate(ast.x, 0.0f, ast.y) * scale(0.2f);
+
+					flatShader.uniform_M = astTransform;
+					flatShader.uniform_VP = vp;
+					flatShader.uniform_LightPos = render.light.position;
+					drawModel(asteroid, flatShader);
+				}
+			}
+
 			// Light Movement
 			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.2f);
 			lightShader.uniform_MVP = lightTransform * vp;
 			drawModel(light, lightShader); 
 			
 			// Model shader
-			//phongShader.uniform_M = shipTransform;
-			//phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
-			//phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
-			//phongShader.uniform_ViewPos = camera.position;
-			//phongShader.uniform_LightPos = render.light.position;
-			//phongShader.uniform_VP = vp;
-			//drawModel(model1, phongShader);
+			phongShader.uniform_M = shipTransform;
+			phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
+			phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
+			phongShader.uniform_ViewPos = camera.position;
+			phongShader.uniform_LightPos = render.light.position;
+			phongShader.uniform_VP = vp;
+			drawModel(model1, phongShader);
 
-			flatShader.uniform_M = shipTransform;
-			flatShader.uniform_LightPos = render.light.position;
-			flatShader.uniform_VP = vp;
-			drawModel(model1, flatShader);
+			//flatShader.uniform_M = shipTransform;
+			//flatShader.uniform_LightPos = render.light.position;
+			//flatShader.uniform_VP = vp;
+			//drawModel(model1, flatShader);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
 
 			char buffer[128];
-			sprintf(buffer, "%f ms Draw time: %f Yaw: %f Frony: %f, %f, %f\n", deltaTime * 1000, tm.milliElapsed(), layer.yaw,
+			sprintf(buffer, "%f ms Draw time: %f Yaw: %f Front: %f, %f, %f\n", deltaTime * 1000, tm.milliElapsed(), layer.yaw,
 					player.front.x, player.front.y, player.front.z);
 			OutputDebugStringA(buffer);
 		}
