@@ -196,7 +196,7 @@ T cross(T v0, T v1) {
 
 Vec3f norm(Vec3f vec) {
 	float length = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
-	if (length != 0) {
+	if (length == 0) {
 		return vec;
 	}
 	return { vec.x / length, vec.y / length, vec.z / length };
