@@ -7,6 +7,12 @@ struct Player {
 	Vec3f front = { 1.0f, 0.0f, 0.0f };
 };
 
+struct Bullet {
+	Vec3f direction;
+	float x;
+	float y;
+};
+
 Player player;
 const int MOVEMENT_SPEED = 0.9f;
 

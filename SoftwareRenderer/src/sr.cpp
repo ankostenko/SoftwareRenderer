@@ -38,14 +38,15 @@ int main(int argc, char **argv) {
 	initRenderer(imageWidth, imageHeight, Vec3f({ 10.0f, 0.0f, 10.0f }));
 
 	Model light;
-
 	Model model1;
+	Model bullet;
 
 	loadModel(model1, "models\\spaceship.obj");
 	normalizeModelCoords(model1);
+	loadModel(bullet, "models\\sphere.obj");
+	normalizeModelCoords(bullet);
 
 	loadModel(light, "models\\sphere.obj");
-	normalizeModelCoords(model);
 	normalizeModelCoords(light);
 
 	// TODO: default texture loading
@@ -78,6 +79,8 @@ int main(int argc, char **argv) {
 	PerspectiveCamera cameraP(0.1f, 1000.0f, (float)M_PI / 4);
 	FreeCamera camera(0.1f, 100.0f, 45.0f, Vec3f({ 0.0f, 0.0f, 6.0f }));
 	Mat4f shipTransform = { };
+
+	std::vector<Bullet> bullets;
 
 	float lastFrame = 0.0f;
 	while (globalRunning) {
@@ -121,8 +124,34 @@ int main(int argc, char **argv) {
 			player.front = norm(Vec3f({ 1.0f, 0.0f, 0.0f }) * transpose(rotateY(angleBeta)));
 			player.x += player.front.x * layer.direction * deltaTime * 3.5f;
 			player.y += player.front.z * layer.direction * deltaTime * 3.5f;
-			printf("%d, %f, %f, %f, %f, %f\n", layer.direction, player.x, player.y, player.front.x, player.front.y, player.front.z);
+			//printf("%d, %f, %f, %f, %f, %f\n", layer.direction, player.x, player.y, player.front.x, player.front.y, player.front.z);
 			drawLine(origin * vp, player.front * vp, magenta);
+
+			// Bullet spawn
+			if (layer.shoot) {
+				Bullet bl;
+				bl.x = player.x;
+				bl.y = player.y;
+				//printf("%f, %f, %f, %f\n", bl.x, bl.y, player.x, player.y);
+				
+				bl.direction = player.front;
+				bullets.push_back(bl);
+			}
+			for (int index = 0; index < bullets.size(); index++) {
+				Bullet &bl = bullets[index];
+				if (bl.x > 5.0f || bl.x < -5.0f || bl.y > 5.0f || bl.y < -5.0f) {
+					bullets.erase(bullets.begin() + index);
+				}
+				bl.x = bl.x + bl.direction.x * deltaTime * 10.0f;
+				bl.y = bl.y + bl.direction.z * deltaTime * 10.0f;
+				printf("%f, %f %f %f\n", bl.x, bl.y, player.x, player.y);
+				Mat4f bulletTransform = translate(bl.x * 50, 0.0f, bl.y * 50) * scale(0.02f);
+
+				flatShader.uniform_M = bulletTransform;
+				flatShader.uniform_VP = vp;
+				flatShader.uniform_LightPos = render.light.position;
+				drawModel(bullet, flatShader);
+			}
 
 			// Light Movement
 			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.2f);
