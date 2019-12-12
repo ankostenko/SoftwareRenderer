@@ -232,9 +232,21 @@ void drawModel(Model &model, IShader &shader) {
 		for (int j = 0; j < 3; j++) {
 			triVert[j] = model.triVert(i, j);
 			normals[j] = model.triNorm(i, j);
-			triVert[j] = shader.vertex(triVert[j], normals[j], render.light.position, j);
+			triVert[j] = shader.vertex(triVert[j], normals[j], j);
 			viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
 		}
+			//triVert[0] = model.triVert(i, 0);
+			//triVert[1] = model.triVert(i, 1);
+			//triVert[2] = model.triVert(i, 2);
+			//normals[0] = model.triNorm(i, 0);
+			//normals[1] = model.triNorm(i, 1);
+			//normals[2] = model.triNorm(i, 2);
+			//triVert[0] = shader.vertex(triVert[0], normals[0], render.light.position, 0);
+			//triVert[1] = shader.vertex(triVert[1], normals[1], render.light.position, 1);
+			//triVert[2] = shader.vertex(triVert[2], normals[2], render.light.position, 2);
+			//viewport(triVert[0], render.imagebuffer.width, render.imagebuffer.height);
+			//viewport(triVert[1], render.imagebuffer.width, render.imagebuffer.height);
+			//viewport(triVert[2], render.imagebuffer.width, render.imagebuffer.height);
 		rasterize(triVert, shader);
 	}
 }

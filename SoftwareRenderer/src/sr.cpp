@@ -15,6 +15,7 @@
 #include "camera.cpp"
 
 #include "load.h"
+#include "game.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
@@ -25,7 +26,7 @@ bool globalPause = false;
 
 Model model;
 
-int imageWidth = 800;
+int imageWidth = 1100;
 int imageHeight = 600;
 
 FlatShader flatShader;
@@ -34,19 +35,14 @@ PhongShader phongShader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
-	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f,  0.0f, 5.0f }));
+	initRenderer(imageWidth, imageHeight, Vec3f({ 10.0f, 0.0f, 10.0f }));
 
 	Model light;
 
 	Model model1;
-	Model model2;
-	Model model3;
-	Model model4;
 
-	loadModel(model1, "models\\cube.obj");
+	loadModel(model1, "models\\spaceship.obj");
 	normalizeModelCoords(model1);
-	loadModel(model2, "models\\spaceship.obj");
-	normalizeModelCoords(model2);
 
 	loadModel(light, "models\\sphere.obj");
 	normalizeModelCoords(model);
@@ -79,8 +75,9 @@ int main(int argc, char **argv) {
 	Vec3f Z = { 0.0f, 0.0f, 1.0f };
 	Vec3f origin = { 0.0f, 0.0f, 0.0f };
 
-	PerspectiveCamera cameraP(0.1f, 1000.0f, (float)M_PI / 3);
+	PerspectiveCamera cameraP(0.1f, 1000.0f, (float)M_PI / 4);
 	FreeCamera camera(0.1f, 100.0f, 45.0f, Vec3f({ 0.0f, 0.0f, 6.0f }));
+	Mat4f shipTransform = { };
 
 	float lastFrame = 0.0f;
 	while (globalRunning) {
@@ -97,51 +94,61 @@ int main(int argc, char **argv) {
 
 			cameraForwardDirection = 0;
 			cameraRightDirection = 0;
+			layer.direction = 0;
 			ProcessInput(window, angleAlpha, angleBeta, angleGamma, cameraForwardDirection, cameraRightDirection, scaleVariable, deltaTime);
 
 			clearZBuffer(camera.farClippingPlane);
 			clearImBuffer(Color(255 * 0.6f, 255 * 0.3f, 255 * 0.2f));
 
-			camera.processMouseInput(mouse.x, mouse.y, deltaTime);
-			camera.processMouseScrolling(mouse);
-			camera.forwardMovement(cameraForwardDirection, deltaTime);
-			camera.rightMovement(cameraRightDirection, deltaTime); 
+			camera.position = { 0.0f, 5.0f, 5.0f };
+			camera.pitch = -45.0f;
+			camera.yaw = 270.0f;
 			camera.updateVectors();
 			camera.lookAt();
+			
+			// Game simulation
+			//Game();
 
 			Mat4f vp = camera.view * camera.project();
+			shipTransform = transpose(rotateY(angleBeta)) * scale(5.0f) * translate(player.x, 0.0f, player.y);
 
-			Mat4f modelTransform1 = translate(0.0f, 0.0f, 0.0f) * rotate(angleAlpha, 0, 0) * scale(2.0f);
-			Mat4f modelTransform2 = translate(0.0f, 1.5f, 0.0f) * rotate(angleAlpha, 0, 0);
-			Mat4f modelTransform3 = translate(1.5f, 0.0f, 0.0f) * rotate(angleAlpha, 0, 0);
-			Mat4f modelTransform4 = translate(1.5f, 1.5f, 0.0f) * rotate(angleAlpha, 0, 0);
+			// World Coordinate system
+			drawLine(origin * vp, X * vp, red);
+			drawLine(origin * vp, Y * vp, green);
+			drawLine(origin * vp, Z * vp, blue);
+
+			// Front vector
+			player.front = norm(Vec3f({ 1.0f, 0.0f, 0.0f }) * transpose(rotateY(angleBeta)));
+			player.x += player.front.x * layer.direction * deltaTime * 3.5f;
+			player.y += player.front.z * layer.direction * deltaTime * 3.5f;
+			printf("%d, %f, %f, %f, %f, %f\n", layer.direction, player.x, player.y, player.front.x, player.front.y, player.front.z);
+			drawLine(origin * vp, player.front * vp, magenta);
 
 			// Light Movement
-			render.light.position.y = 0.0f;
-			//render.light.position.x = 1000 * sin(fpsLock.secondsElapsed() / 2) * deltaTime;
-			//render.light.position.z = 1000 * cos(fpsLock.secondsElapsed() / 2) * deltaTime;
-			render.light.position.x = 7.0f;
-			render.light.position.z = 7.0f;
 			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.2f);
 			lightShader.uniform_MVP = lightTransform * vp;
 			drawModel(light, lightShader); 
 			
 			// Model shader
-			phongShader.uniform_M = modelTransform1;
-			phongShader.uniform_MTI = transpose(inverse(modelTransform3));
-			phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
-			phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
-			phongShader.uniform_ViewPos = camera.position;
-			phongShader.uniform_LightPos = render.light.position;
-			phongShader.uniform_VP = vp;
-			drawModel(model2, phongShader);
+			//phongShader.uniform_M = shipTransform;
+			//phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
+			//phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
+			//phongShader.uniform_ViewPos = camera.position;
+			//phongShader.uniform_LightPos = render.light.position;
+			//phongShader.uniform_VP = vp;
+			//drawModel(model1, phongShader);
+
+			flatShader.uniform_M = shipTransform;
+			flatShader.uniform_LightPos = render.light.position;
+			flatShader.uniform_VP = vp;
+			drawModel(model1, flatShader);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
-			
 
-			char buffer[64];
-			sprintf(buffer, "%f ms Draw time: %f\n", deltaTime * 1000, tm.milliElapsed());
+			char buffer[128];
+			sprintf(buffer, "%f ms Draw time: %f Yaw: %f Frony: %f, %f, %f\n", deltaTime * 1000, tm.milliElapsed(), layer.yaw,
+					player.front.x, player.front.y, player.front.z);
 			OutputDebugStringA(buffer);
 		}
 	}

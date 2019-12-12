@@ -1,4 +1,6 @@
 #pragma once
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 template<int row, int col, typename T>
 struct Matrix {
@@ -152,6 +154,20 @@ Mat4f translate(float x, float y, float z) {
 	return mat;
 }
 
+Mat4f rotateY(float angle) {
+	float cosA = cos(angle);
+	float sinA = sin(angle);
+
+	Mat4f mat = { };
+
+	mat[0][0] = cosA; mat[0][1] = 0; mat[0][2] = -sinA;
+	mat[1][0] = 0;	  mat[1][1] = 1; mat[1][2] = 0;
+	mat[2][0] = sinA; mat[2][1] = 0; mat[2][2] = cosA;
+	mat[3][3] = 1;
+
+	return mat;
+}
+
 // ZXY order
 Mat4f rotate(float alpha, float beta, float gamma) {
 	Mat4f rotationMatrix;
@@ -180,6 +196,9 @@ T cross(T v0, T v1) {
 
 Vec3f norm(Vec3f vec) {
 	float length = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+	if (length != 0) {
+		return vec;
+	}
 	return { vec.x / length, vec.y / length, vec.z / length };
 }
 
