@@ -1,6 +1,5 @@
 #pragma once
 
-
 enum KeyBindings {
 	S_BUTTON = 0x53,
 	C_BUTTON = 0x43,
@@ -44,12 +43,12 @@ struct Mouse {
 
 struct Mouse mouse = { buffer_width / 2, buffer_height / 2 };
 
-struct Player {
-	int y;
-	int x;
+struct Layer {
+	float yaw;
+	int direction;
 };
 
-struct Player player = { 0, 0 };
+struct Layer layer;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	switch (uMsg) {
@@ -110,6 +109,22 @@ void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angleGamma, int &forwardDirection, int &rightDirection, float &scaleVariable, float deltaTime) {
 	MSG msg;
 
+	if (GetAsyncKeyState(T_BUTTON)) {
+		layer.direction = 1;
+	}
+	if (GetAsyncKeyState(A_BUTTON)) {
+		angleBeta -= M_PI * deltaTime;
+		if (angleBeta < 0) {
+			angleBeta = 2 * M_PI;
+		}
+	}
+	if (GetAsyncKeyState(D_BUTTON)) {
+		angleBeta += M_PI * deltaTime;
+		if (angleBeta > 2 * M_PI) {
+			angleBeta = 0;
+		}
+	}
+
 	while (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -151,41 +166,46 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 			case WM_KEYDOWN: {
 				UINT32 vkCode = msg.wParam;
 				bool isKeyDown = ((msg.lParam >> 31) == 0);
-				if (isKeyDown) {
+
+				if (vkCode == VK_ESCAPE) {
+					globalRunning = !globalRunning;
+				}
+
+				/*if (isKeyDown) {
 					if (vkCode == D_BUTTON) {
-						angleBeta += M_PI / 8 * deltaTime;
+						angleBeta += M_PI * deltaTime;
 						if (angleBeta > 2 * M_PI) {
 							angleBeta = 0;
 						}
 					}
 					else if (vkCode == A_BUTTON) {
-						angleBeta -= M_PI / 8 * deltaTime;
+						angleBeta -= M_PI * deltaTime;
 						if (angleBeta < 0) {
 							angleBeta = 2 * M_PI;
 						}
 					}
 					else if (vkCode == E_BUTTON) {
-						angleGamma -= M_PI / 8 * deltaTime;
+						angleGamma -= M_PI / 4 * deltaTime;
 						if (angleGamma < 0) {
 							angleGamma = 2 * M_PI;
 						}
 					}
 					else if (vkCode == Q_BUTTON) {
-						angleGamma += M_PI / 8 * deltaTime;
+						angleGamma += M_PI / 4 * deltaTime;
 						if (angleGamma > 2 * M_PI) {
 							angleGamma = 0;
 						}
 					}
 					else if (vkCode == W_BUTTON) {
-						angleAlpha -= M_PI / 2 * deltaTime;
-						if (angleAlpha > 2 * M_PI) {
-							angleAlpha = 0;
+						angleAlpha -= M_PI / 4 * deltaTime;
+						if (angleAlpha < 0) {
+							angleAlpha = 2 * M_PI;
 						}
 					}
 					else if (vkCode == S_BUTTON) {
-						angleAlpha += M_PI / 2 * deltaTime;
-						if (angleAlpha < 0) {
-							angleAlpha = 2 * M_PI;
+						angleAlpha += M_PI / 4 * deltaTime;
+						if (angleAlpha > 2 * M_PI) {
+							angleAlpha = 0;
 						}
 					}
 					else if (vkCode == J_BUTTON) {
@@ -213,18 +233,18 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 						globalPause = !globalPause;
 					}
 					else if (vkCode == T_BUTTON) {
-						player.y += 1;
+						layer.direction = 1;
 					}
 					else if (vkCode == G_BUTTON) {
-						player.y -= 1;
+						layer.direction = -1;
 					}
 					else if (vkCode == F_BUTTON) {
-						player.x += 1;
+						layer.yaw += 1 * deltaTime;
 					}
 					else if (vkCode == H_BUTTON) {
-						player.x -= 1;
+						layer.yaw -= 1 * deltaTime;
 					}
-				}
+				}*/
 			} break;
 
 		}

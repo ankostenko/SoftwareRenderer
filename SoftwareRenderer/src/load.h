@@ -33,6 +33,11 @@ void normalizeModelCoords(Model &model) {
 		vert->y /= length;
 		vert->z /= length;
 	}
+
+	for (int i = 0; i < model.vertices.size(); i++) {
+		Vec3f *vert = &model.vertices.data()[i];
+		vert->z -= 0.970f;
+	}
 }
 
 void loadModel(Model &model, const char *pathname) {

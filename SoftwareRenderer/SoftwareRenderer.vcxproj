@@ -93,6 +93,7 @@
     <ClInclude Include="lib\stb_image.h" />
     <ClInclude Include="lib\stb_image_write.h" />
     <ClInclude Include="src\Color.h" />
+    <ClInclude Include="src\game.h" />
     <ClInclude Include="src\Image.h" />
     <ClInclude Include="src\internal.h" />
     <ClInclude Include="src\load.h" />
