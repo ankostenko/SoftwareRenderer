@@ -46,6 +46,7 @@ struct Mouse mouse = { buffer_width / 2, buffer_height / 2 };
 struct Layer {
 	float yaw;
 	int direction;
+	bool shoot;
 };
 
 struct Layer layer;
@@ -123,6 +124,11 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 		if (angleBeta > 2 * M_PI) {
 			angleBeta = 0;
 		}
+	}
+
+	layer.shoot = false;
+	if (GetAsyncKeyState(VK_SPACE)) {
+		layer.shoot = true;
 	}
 
 	while (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
