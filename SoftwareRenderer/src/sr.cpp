@@ -124,7 +124,13 @@ int main(int argc, char **argv) {
 			player.front = norm(Vec3f({ 1.0f, 0.0f, 0.0f }) * transpose(rotateY(angleBeta)));
 			player.x += player.front.x * layer.direction * deltaTime * 3.5f;
 			player.y += player.front.z * layer.direction * deltaTime * 3.5f;
-			//printf("%d, %f, %f, %f, %f, %f\n", layer.direction, player.x, player.y, player.front.x, player.front.y, player.front.z);
+			
+			// "Border"
+			if (player.x > 5.0f)  { player.x = -5.0f; }
+			if (player.x < -5.0f) { player.x =  5.0f; }
+			if (player.y > 3.0f)  { player.y = -4.0f; }
+			if (player.y < -4.0f) { player.y =  3.0f; }
+
 			drawLine(origin * vp, player.front * vp, magenta);
 
 			// Bullet spawn
@@ -132,7 +138,6 @@ int main(int argc, char **argv) {
 				Bullet bl;
 				bl.x = player.x;
 				bl.y = player.y;
-				//printf("%f, %f, %f, %f\n", bl.x, bl.y, player.x, player.y);
 				
 				bl.direction = player.front;
 				bullets.push_back(bl);
@@ -144,7 +149,6 @@ int main(int argc, char **argv) {
 				}
 				bl.x = bl.x + bl.direction.x * deltaTime * 10.0f;
 				bl.y = bl.y + bl.direction.z * deltaTime * 10.0f;
-				printf("%f, %f %f %f\n", bl.x, bl.y, player.x, player.y);
 				Mat4f bulletTransform = translate(bl.x * 50, 0.0f, bl.y * 50) * scale(0.02f);
 
 				flatShader.uniform_M = bulletTransform;
