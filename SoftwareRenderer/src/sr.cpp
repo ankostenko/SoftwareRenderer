@@ -35,7 +35,7 @@ PhongShader phongShader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
-	initRenderer(imageWidth, imageHeight, Vec3f({ 10.0f, 0.0f, 10.0f }));
+	initRenderer(imageWidth, imageHeight, Vec3f({ 5.0f, 1.0f, 5.0f }));
 
 	Model light;
 	Model model1;
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 	normalizeModelCoords(asteroid);
 
 	loadModel(light, "models\\sphere.obj");
-	normalizeModelCoords(light);
+	//normalizeModelCoords(light);
 
 	// TODO: default texture loading
 	loadTexture(model, "models\\grid.jpg");
@@ -108,8 +108,8 @@ int main(int argc, char **argv) {
 			clearZBuffer(camera.farClippingPlane);
 			clearImBuffer(Color(255 * 0.6f, 255 * 0.3f, 255 * 0.2f));
 
-			camera.position = { 0.0f, 5.0f, 5.0f };
-			camera.pitch = -45.0f;
+			camera.position = { 0.0f, 5.0f, 7.0f };
+			camera.pitch = -40.0f;
 			camera.yaw = 270.0f;
 			camera.updateVectors();
 			camera.lookAt();
@@ -118,9 +118,9 @@ int main(int argc, char **argv) {
 			shipTransform = transpose(rotateY(angleBeta)) * scale(3.0f) * translate(player.x, 0.0f, player.y);
 
 			// World Coordinate system
-			drawLine(origin * vp, X * vp, red);
-			drawLine(origin * vp, Y * vp, green);
-			drawLine(origin * vp, Z * vp, blue);
+			//drawLine(origin * vp, X * vp, red);
+			//drawLine(origin * vp, Y * vp, green);
+			//drawLine(origin * vp, Z * vp, blue);
 
 			// Front vector
 			player.front = norm(Vec3f({ 1.0f, 0.0f, 0.0f }) * transpose(rotateY(angleBeta)));
@@ -133,7 +133,18 @@ int main(int argc, char **argv) {
 			if (player.y > 3.0f)  { player.y = -4.0f; }
 			if (player.y < -4.0f) { player.y =  3.0f; }
 
-			drawLine(origin * vp, player.front * vp, magenta);
+			// Draw vertical grid
+			for (float index = -5; index < 6; index += 1.0f) {
+				drawLine(Vec3f({ index, 0.0f, -4.0f }) * vp, Vec3f({ index, 0.0f, 3.0f }) * vp, white);
+			}
+			
+			// Draw horizontal grid
+			for (float index = -4; index < 4; index += 1.0f) {
+				drawLine(Vec3f({ -5.0f, 0.0f, index }) * vp, Vec3f({ 5.0f, 0.0f, index }) * vp, white);
+			}
+			
+			//drawLine(origin * vp, player.front * vp, magenta);
+			
 
 			// Bullet spawn
 			if (layer.shoot) {
@@ -177,7 +188,7 @@ int main(int argc, char **argv) {
 			}
 
 			// Light Movement
-			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.2f);
+			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z);
 			lightShader.uniform_MVP = lightTransform * vp;
 			drawModel(light, lightShader); 
 			
