@@ -73,11 +73,13 @@ struct PhongShader : IShader {
 
 struct LightShader : IShader {
 	Mat4f uniform_MVP;
+	Vec3f uniform_LightColor;
+
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, int index) override {
 		return vert * uniform_MVP;
 	}
 
 	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {
-		return { 255.0f, 255.0f, 255.0f };
+		return uniform_LightColor;
 	}
 };

@@ -21,3 +21,5 @@ struct Asteroid {
 };
 
 Player player;
+
+const float ASTEROID_MOVEMENT_SPEED = 2.0f;

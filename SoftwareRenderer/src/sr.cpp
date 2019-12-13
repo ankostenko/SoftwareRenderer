@@ -35,7 +35,7 @@ PhongShader phongShader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
-	initRenderer(imageWidth, imageHeight, Vec3f({ 5.0f, 1.0f, 5.0f }));
+	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f, 2.0f, 3.0f }));
 
 	Model light;
 	Model model1;
@@ -85,8 +85,24 @@ int main(int argc, char **argv) {
 
 	std::vector<Bullet> bullets;
 	std::vector<Asteroid> asteroids;
-	asteroids.push_back(Asteroid({ false, Vec3f({ 1.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
 
+	std::default_random_engine generator;
+	std::uniform_real_distribution<float> distribution(0, 1);
+	const std::array<int, 2> posList = { -1, 1 };
+	std::random_device rd;
+	std::mt19937 eng(rd());
+	std::uniform_int_distribution<> distr(0, posList.size() - 1);
+	
 	float lastFrame = 0.0f;
 	while (globalRunning) {
 		float currentFrame = fpsLock.secondsElapsed();
@@ -106,7 +122,8 @@ int main(int argc, char **argv) {
 			ProcessInput(window, angleAlpha, angleBeta, angleGamma, cameraForwardDirection, cameraRightDirection, scaleVariable, deltaTime);
 
 			clearZBuffer(camera.farClippingPlane);
-			clearImBuffer(Color(255 * 0.6f, 255 * 0.3f, 255 * 0.2f));
+			//clearImBuffer(Color(255 * 0.2f, 255 * 0.1f, 255 * 0.0f));
+			clearImBuffer(Color(0, 0, 0));
 
 			camera.position = { 0.0f, 5.0f, 7.0f };
 			camera.pitch = -40.0f;
@@ -134,17 +151,16 @@ int main(int argc, char **argv) {
 			if (player.y < -4.0f) { player.y =  3.0f; }
 
 			// Draw vertical grid
-			for (float index = -5; index < 6; index += 1.0f) {
-				drawLine(Vec3f({ index, 0.0f, -4.0f }) * vp, Vec3f({ index, 0.0f, 3.0f }) * vp, white);
-			}
-			
-			// Draw horizontal grid
-			for (float index = -4; index < 4; index += 1.0f) {
-				drawLine(Vec3f({ -5.0f, 0.0f, index }) * vp, Vec3f({ 5.0f, 0.0f, index }) * vp, white);
-			}
+			//for (float index = -5; index < 6; index += 1.0f) {
+			//	drawLine(Vec3f({ index, 0.0f, -4.0f }) * vp, Vec3f({ index, 0.0f, 3.0f }) * vp, white);
+			//}
+			//
+			//// Draw horizontal grid
+			//for (float index = -4; index < 4; index += 1.0f) {
+			//	drawLine(Vec3f({ -5.0f, 0.0f, index }) * vp, Vec3f({ 5.0f, 0.0f, index }) * vp, white);
+			//}
 			
 			//drawLine(origin * vp, player.front * vp, magenta);
-			
 
 			// Bullet spawn
 			if (layer.shoot) {
@@ -155,6 +171,7 @@ int main(int argc, char **argv) {
 				bl.direction = player.front;
 				bullets.push_back(bl);
 			}
+
 			for (int index = 0; index < bullets.size(); index++) {
 				Bullet &bl = bullets[index];
 				if (bl.x > 5.0f || bl.x < -5.0f || bl.y > 5.0f || bl.y < -5.0f) {
@@ -164,33 +181,64 @@ int main(int argc, char **argv) {
 				bl.y = bl.y + bl.direction.z * deltaTime * 10.0f;
 				Mat4f bulletTransform = translate(bl.x * 50, 0.0f, bl.y * 50) * scale(0.02f);
 
-				flatShader.uniform_M = bulletTransform;
-				flatShader.uniform_VP = vp;
-				flatShader.uniform_LightPos = render.light.position;
-				drawModel(bullet, flatShader);
+				lightShader.uniform_MVP = bulletTransform * vp;
+				lightShader.uniform_LightColor = { 0.0f, 255.0f, 255.0f };
+				drawModel(bullet, lightShader);
 			}
+
+			// Light Movement
+			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z);
+			lightShader.uniform_MVP = lightTransform * vp;
+			lightShader.uniform_LightColor = { 255.0f, 255.0f, 255.0f };
+			drawModel(light, lightShader);
 
 			// Asteroid's movement
 			for (int index = 0; index < asteroids.size(); index++) {
 				Asteroid &ast = asteroids[index];
 				// Move an asteroid
 				if (!ast.available) {
-					ast.x += ast.direction.x * deltaTime * 2.0f;
-					ast.y += ast.direction.y * deltaTime * 2.0f;
+					ast.x += ast.direction.x * deltaTime * 14.0f;
+					ast.y += ast.direction.y * deltaTime * 14.0f;
+
+					if (ast.x > 50.0f || ast.x < -50.0f || ast.y < -45.0f || ast.y > 30.0f) {
+						ast.available = true;
+					}
 
 					Mat4f astTransform = translate(ast.x, 0.0f, ast.y) * scale(0.2f);
 
 					flatShader.uniform_M = astTransform;
 					flatShader.uniform_VP = vp;
 					flatShader.uniform_LightPos = render.light.position;
-					drawModel(asteroid, flatShader);
+					// Phong
+					phongShader.uniform_M = astTransform;
+					phongShader.uniform_ObjColor = { 255.0f, 255.0f, 255.0f };
+					phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
+					phongShader.uniform_ViewPos = camera.position;
+					phongShader.uniform_LightPos = render.light.position;
+					phongShader.uniform_VP = vp;
+					drawModel(asteroid, phongShader);
+				}
+				else {
+					// Generate "new" asteroid
+					ast.x = (distribution(generator)) * posList[distr(eng)] * 40.0f;
+					ast.y = (distribution(generator)) * posList[distr(eng)] * 40.0f;
+
+					if (ast.x > 0) {
+						ast.direction.x = -distribution(generator);
+					}
+					else {
+						ast.direction.x = distribution(generator);
+					}
+					if (ast.y > 0) {
+						ast.direction.y = -distribution(generator);
+					}
+					else {
+						ast.direction.y = distribution(generator);
+					}
+
+					ast.available = false;
 				}
 			}
-
-			// Light Movement
-			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z);
-			lightShader.uniform_MVP = lightTransform * vp;
-			drawModel(light, lightShader); 
 			
 			// Model shader
 			phongShader.uniform_M = shipTransform;
@@ -200,11 +248,6 @@ int main(int argc, char **argv) {
 			phongShader.uniform_LightPos = render.light.position;
 			phongShader.uniform_VP = vp;
 			drawModel(model1, phongShader);
-
-			//flatShader.uniform_M = shipTransform;
-			//flatShader.uniform_LightPos = render.light.position;
-			//flatShader.uniform_VP = vp;
-			//drawModel(model1, flatShader);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);

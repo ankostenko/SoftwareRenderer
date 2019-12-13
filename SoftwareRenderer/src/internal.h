@@ -6,6 +6,8 @@
 #include <windowsx.h>
 
 #include <vector>
+#include <random>
+#include <array>
 #define _USE_MATH_DEFINES
 #include <math.h>
 
