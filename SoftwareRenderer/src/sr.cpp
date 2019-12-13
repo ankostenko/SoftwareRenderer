@@ -35,7 +35,7 @@ PhongShader phongShader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
-	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f, 2.0f, 3.0f }));
+	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f, 0.0f, -12.0f * 50 }));
 
 	Model light;
 	Model model1;
@@ -123,8 +123,10 @@ int main(int argc, char **argv) {
 
 			clearZBuffer(camera.farClippingPlane);
 			//clearImBuffer(Color(255 * 0.2f, 255 * 0.1f, 255 * 0.0f));
-			clearImBuffer(Color(0, 0, 0));
+			clearImBuffer(Color(56, 0, 0));
 
+			camera.processMouseScrolling(mouse);
+			camera.processMouseInput(mouse.x, mouse.y, deltaTime);
 			camera.position = { 0.0f, 5.0f, 7.0f };
 			camera.pitch = -40.0f;
 			camera.yaw = 270.0f;
@@ -151,14 +153,14 @@ int main(int argc, char **argv) {
 			if (player.y < -4.0f) { player.y =  3.0f; }
 
 			// Draw vertical grid
-			//for (float index = -5; index < 6; index += 1.0f) {
-			//	drawLine(Vec3f({ index, 0.0f, -4.0f }) * vp, Vec3f({ index, 0.0f, 3.0f }) * vp, white);
-			//}
-			//
-			//// Draw horizontal grid
-			//for (float index = -4; index < 4; index += 1.0f) {
-			//	drawLine(Vec3f({ -5.0f, 0.0f, index }) * vp, Vec3f({ 5.0f, 0.0f, index }) * vp, white);
-			//}
+			for (float index = -5; index < 6; index += 1.0f) {
+				drawLine(Vec3f({ index, 0.0f, -4.0f }) * vp, Vec3f({ index, 0.0f, 3.0f }) * vp, white);
+			}
+			
+			// Draw horizontal grid
+			for (float index = -4; index < 4; index += 1.0f) {
+				drawLine(Vec3f({ -5.0f, 0.0f, index }) * vp, Vec3f({ 5.0f, 0.0f, index }) * vp, white);
+			}
 			
 			//drawLine(origin * vp, player.front * vp, magenta);
 
@@ -187,7 +189,7 @@ int main(int argc, char **argv) {
 			}
 
 			// Light Movement
-			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z);
+			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.02f);
 			lightShader.uniform_MVP = lightTransform * vp;
 			lightShader.uniform_LightColor = { 255.0f, 255.0f, 255.0f };
 			drawModel(light, lightShader);
@@ -211,7 +213,8 @@ int main(int argc, char **argv) {
 					flatShader.uniform_LightPos = render.light.position;
 					// Phong
 					phongShader.uniform_M = astTransform;
-					phongShader.uniform_ObjColor = { 255.0f, 255.0f, 255.0f };
+					phongShader.uniform_MTI = transpose(inverse(astTransform));
+					phongShader.uniform_ObjColor = { 125.0f, 125.0f, 125.0f };
 					phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
 					phongShader.uniform_ViewPos = camera.position;
 					phongShader.uniform_LightPos = render.light.position;
@@ -242,6 +245,7 @@ int main(int argc, char **argv) {
 			
 			// Model shader
 			phongShader.uniform_M = shipTransform;
+			phongShader.uniform_MTI = transpose(inverse(shipTransform));
 			phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
 			phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
 			phongShader.uniform_ViewPos = camera.position;

@@ -35,7 +35,7 @@ struct PhongShader : IShader {
 	Vec3f fragPos[3];
 
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, int index) override {
-		Normal[index] = norm(normal * uniform_M);
+		Normal[index] = norm(normal * uniform_MTI);
 		fragPos[index] = norm(vert * uniform_M);
 
 		return vert * uniform_M * uniform_VP;

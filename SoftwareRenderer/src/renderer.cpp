@@ -195,12 +195,12 @@ void clearZBuffer(float farClippingPlane) {
 	}
 }
 
-void initRenderer(int width, int height, Vec3f lightDir) {
+void initRenderer(int width, int height, Vec3f lightPos) {
 	render.imagebuffer = Image(width, height);
 	render.numberOfModels = 0;
 	render.zbuffer = new float[width * height];
 
-	render.light.position = norm(lightDir);
+	render.light.position = lightPos;
 	render.light.intensity = 3.5f;
 	render.light.color = white;
 }
