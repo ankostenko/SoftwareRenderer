@@ -61,18 +61,46 @@ struct Vec3f {
 
 	Vec3f operator*(Mat4f mat) {
 		Vec3f vec = { };
-
-		vec.x =   x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + mat[3][0];
-		vec.y =   x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + mat[3][1];
-		vec.z =   x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + mat[3][2];
-		float w = x * mat[0][3] + y * mat[1][3] + z * mat[2][3] + mat[3][3];
 		
-		if (w != 0) {
-			vec.y /= w;
-			vec.z /= w;
-			vec.x /= w;
-		}
+		//vec.x =   x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + mat[3][0];
+		//vec.y =   x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + mat[3][1];
+		//vec.z =   x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + mat[3][2];
+		//float w = x * mat[0][3] + y * mat[1][3] + z * mat[2][3] + mat[3][3];
+		//
+		//if (w != 0) {
+		//	vec.y /= w;
+		//	vec.z /= w;
+		//	vec.x /= w;
+		//}
+		//return vec;
 
+		__m128 Y = _mm_set1_ps(y);
+		__m128 X = _mm_set1_ps(x);
+		__m256 drow1 = _mm256_set_m128(Y, X);
+		__m256 matdrow = _mm256_loadu_ps(&mat.mat[0][0]);
+		__m256 result1 = _mm256_mul_ps(drow1, matdrow);
+
+		__m128 One = _mm_set1_ps(1);
+		__m128 Z =   _mm_set1_ps(z);
+		__m256 drow2 = _mm256_set_m128(One, Z);
+		__m256 matdrow2 = _mm256_loadu_ps(&mat.mat[2][0]);
+		__m256 result2 = _mm256_mul_ps(drow2, matdrow2);
+		
+		__m256 intervec = _mm256_add_ps(result1, result2);
+		
+		// Split vector
+		__m128 xy = _mm256_extractf128_ps(intervec, 0);
+		__m128 zw = _mm256_extractf128_ps(intervec, 1);
+
+		__m128 resvec = _mm_add_ps(xy, zw);
+		
+		if (resvec.m128_f32[3] != 0) {
+			__m128 w = _mm_set1_ps(resvec.m128_f32[3]);
+			resvec = _mm_div_ps(resvec, w);
+		}
+		
+		vec = *(Vec3f*)&resvec.m128_f32;
+		
 		return vec;
 	}
 

@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
 				}
 				bl.x = bl.x + bl.direction.x * deltaTime * 10.0f;
 				bl.y = bl.y + bl.direction.z * deltaTime * 10.0f;
-				Mat4f bulletTransform = translate(bl.x * 50, 0.0f, bl.y * 50) * scale(0.02f);
+				Mat4f bulletTransform = translate(bl.x * 50, 0.0f, bl.y * 50) * scale(0.02f) * scaleY(0.3f);
 
 				lightShader.uniform_MVP = bulletTransform * vp;
 				lightShader.uniform_LightColor = { 0.0f, 255.0f, 255.0f };
