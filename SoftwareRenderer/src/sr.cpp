@@ -99,10 +99,6 @@ int main(int argc, char **argv) {
 
 	std::default_random_engine generator;
 	std::uniform_real_distribution<float> distribution(0, 1);
-	const std::array<int, 2> posList = { -1, 1 };
-	std::random_device rd;
-	std::mt19937 eng(rd());
-	std::uniform_int_distribution<> distr(0, posList.size() - 1);
 	
 	int Score = 0;
 
@@ -213,7 +209,7 @@ int main(int argc, char **argv) {
 				// Move an asteroid
 				if (!ast.available) {
 					// Player is dead
-					if ((abs(ast.x / 4 - player.x) < 0.35f) && (abs(ast.y / 4 - player.y) < 0.35f)) {
+					if ((abs(ast.x / 4 - player.x) < 0.25f) && (abs(ast.y / 4 - player.y) < 0.25f)) {
 						player.x = 0;
 						player.y = 0;
 
@@ -253,13 +249,13 @@ int main(int argc, char **argv) {
 				}
 				else {
 					// Generate "new" asteroid
-					ast.x = (distribution(generator)) * posList[distr(eng)] * 40.0f;
-					ast.y = (distribution(generator)) * posList[distr(eng)] * 40.0f;
+					float distro = distribution(generator);
+					ast.x = cos(distro * 2 * M_PI) * 35.0f;
+					ast.y = sin(distro * 2 * M_PI) * 35.0f;
 
 					if (ast.x > 0) {
 						ast.direction.x = -distribution(generator);
-					}
-					else {
+					} else {
 						ast.direction.x = distribution(generator);
 					}
 					if (ast.y > 0) {
