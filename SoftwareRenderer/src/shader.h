@@ -7,16 +7,16 @@ struct IShader {
 };
 
 struct FlatShader : IShader {
-	Mat4f uniform_M;
-	Mat4f uniform_VP;
+	Mat4f* uniform_M;
+	Mat4f* uniform_VP;
 	Vec3f uniform_LightPos;
 	float varIntensity = 0.5f;
 	Vec3f rgb = { 255.0f, 255.0f, 255.0f };
 
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, int index) override {
-		normal = norm(normal * uniform_M);
+		normal = norm(normal * *uniform_M);
 		varIntensity = clampMin(0.0f, normal * norm(uniform_LightPos));
-		return vert * uniform_M * uniform_VP;
+		return vert * *uniform_M * *uniform_VP;
 	}
 
 	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {
@@ -25,9 +25,9 @@ struct FlatShader : IShader {
 };
 
 struct PhongShader : IShader {
-	Mat4f uniform_M;
-	Mat4f uniform_MTI;
-	Mat4f uniform_VP;
+	Mat4f* uniform_M;
+	Mat4f* uniform_MTI;
+	Mat4f* uniform_VP;
 	Vec3f uniform_ObjColor;
 	Vec3f uniform_LightColor;
 	Vec3f uniform_ViewPos;
@@ -36,27 +36,10 @@ struct PhongShader : IShader {
 	Vec3f fragPos[3];
 	
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, int index) override {
-		Normal[index] = norm(normal * uniform_MTI);
-		fragPos[index] = norm(vert * uniform_M);
-		return vert * uniform_M * uniform_VP;
+		Normal[index] = norm(normal * *uniform_MTI);
+		fragPos[index] = norm(vert * *uniform_M);
+		return vert * *uniform_M * *uniform_VP;
 	}
-
-	//virtual Vec3f* vertex(Vec3f *vert, Vec3f *normal) override {
-	//	Normal[0] = norm(normal[0] * uniform_MTI);
-	//	Normal[1] = norm(normal[1] * uniform_MTI);
-	//	Normal[2] = norm(normal[2] * uniform_MTI);
-	//	
-	//	fragPos[0] = norm(vert[0] * uniform_M);
-	//	fragPos[1] = norm(vert[1] * uniform_M);
-	//	fragPos[2] = norm(vert[2] * uniform_M);
-	//
-	//	Vec3f verts[3];
-	//	verts[0] = vert[0] * uniform_M * uniform_VP;
-	//	verts[1] = vert[1] * uniform_M * uniform_VP;
-	//	verts[2] = vert[2] * uniform_M * uniform_VP;
-	//	
-	//	return verts;
-	//}
 
 	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {
 		Vec3f interpNormal = norm(Normal[0] * w0 + Normal[1] * w1 + Normal[2] * w2);

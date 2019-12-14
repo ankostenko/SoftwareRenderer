@@ -205,24 +205,6 @@ void initRenderer(int width, int height, Vec3f lightPos) {
 	render.light.color = white;
 }
 
-void drawModel(Model &model, Mat4f &modelTransform, Mat4f &view, Mat4f &projection) {
-	Mat4f combinedTransform = modelTransform * view * projection;
-	
-	for (int i = 0; i < model.facesNumber(); i++) {
-		Vec3f triVert[3];
-		Vec3f textureUV[3];
-		Vec3f normals[3];
-
-		for (int j = 0; j < 3; j++) {
-			triVert[j] = model.triVert(i, j) * combinedTransform;
-			textureUV[j] = model.triUV(i, j);
-			normals[j] = norm(model.triNorm(i, j) * inverse(transpose(modelTransform)));
-			viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
-		}
-		//rasterize(triVert, normals, render.models[0]->texture, textureUV);
-	}
-}
-
 void drawModel(Model &model, IShader &shader) {
 	for (int i = 0; i < model.facesNumber(); i++) {
 		Vec3f triVert[3];
@@ -252,5 +234,121 @@ void drawModel(Model &model, IShader &shader) {
 		viewport(triVert[2], render.imagebuffer.width, render.imagebuffer.height);
 		
 		rasterize(triVert, shader);
+	}
+}
+
+// Basic ui system
+void DrawRectangle(int x, int y, int width, int height, Color color) {
+	for (int _x = x; _x < x + width; _x++) {
+		for (int _y = y; _y < y + height; _y++) {
+			render.imagebuffer.set(_x, _y, color);
+		}
+	}
+}
+
+const int M = 3;
+void DrawZero(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, width, M, color);
+	DrawRectangle(x + width, y, M, height, color);
+	DrawRectangle(x, y + height - M, width, M, color);
+	DrawRectangle(x, y, M, height, color);
+}
+
+void DrawOne(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x + width - M, y, M, height, color);
+}
+
+void DrawTwo(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, width, M, color);
+	DrawRectangle(x + width - M, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2 - M, width, M, color);
+	DrawRectangle(x, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x, y + height - M, width, M, color);
+}
+
+void DrawThree(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, width, M, color);
+	DrawRectangle(x + width - M, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2 - M, width, M, color);
+	DrawRectangle(x + width - M, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x, y + height - M, width, M, color);
+}
+
+void DrawFive(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, width, M, color);
+	DrawRectangle(x, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2 - M, width, M, color);
+	DrawRectangle(x + width - M, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x, y + height - M, width, M, color);
+}
+
+void DrawSix(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, width, M, color);
+	DrawRectangle(x, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2 - M, width, M, color);
+	DrawRectangle(x, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x + width - M, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x, y + height - M, width, M, color);
+}
+
+void DrawNine(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, width, M, color);
+	DrawRectangle(x + width - M, y, M, height / 2, color);
+	DrawRectangle(x, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2 - M, width, M, color);
+	DrawRectangle(x + width - M, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x, y + height - M, width, M, color);
+}
+
+void DrawEight(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, width, M, color);
+	DrawRectangle(x + width - M, y, M, height / 2, color);
+	DrawRectangle(x, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2 - M, width, M, color);
+	DrawRectangle(x, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x + width - M, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x, y + height - M, width, M, color);
+}
+
+void DrawSeven(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x + width - M, y, M, height, color);
+	DrawRectangle(x, y, width, M, color);
+}
+
+void DrawFour(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2, width, M, color);
+	DrawRectangle(x + width - M, y, M, height, color);
+}
+
+const int MARGIN = 10;
+const int WIDTH = 30;
+const int HEIGHT = 40;
+void DrawScore(int x, int y, int score) {
+	int temp = score;
+	int NumberOfDigits = 0;
+	while (temp) {
+		temp = temp / 10;
+		NumberOfDigits++;
+	}
+
+	int scorecopy = score;
+	int totalWidth = NumberOfDigits * (WIDTH + 2 * MARGIN);
+	
+	for (int i = 0; i < NumberOfDigits; i++) {
+		int r = scorecopy % 10;
+		scorecopy /= 10;
+		switch (r) {
+			case 0: { DrawZero( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 1: { DrawOne(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 2: { DrawTwo(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 3: { DrawThree(x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 4: { DrawFour( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 5: { DrawFive( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 6: { DrawSix(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 7: { DrawSeven(x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 8: { DrawEight(x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 9: { DrawNine( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
+		}
 	}
 }

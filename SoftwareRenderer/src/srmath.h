@@ -62,17 +62,17 @@ struct Vec3f {
 	Vec3f operator*(Mat4f mat) {
 		Vec3f vec = { };
 		
-		//vec.x =   x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + mat[3][0];
-		//vec.y =   x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + mat[3][1];
-		//vec.z =   x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + mat[3][2];
-		//float w = x * mat[0][3] + y * mat[1][3] + z * mat[2][3] + mat[3][3];
-		//
-		//if (w != 0) {
-		//	vec.y /= w;
-		//	vec.z /= w;
-		//	vec.x /= w;
-		//}
-		//return vec;
+		vec.x =   x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + mat[3][0];
+		vec.y =   x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + mat[3][1];
+		vec.z =   x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + mat[3][2];
+		float w = x * mat[0][3] + y * mat[1][3] + z * mat[2][3] + mat[3][3];
+		
+		if (w != 0) {
+			vec.y /= w;
+			vec.z /= w;
+			vec.x /= w;
+		}
+		return vec;
 
 		__m128 Y = _mm_set1_ps(y);
 		__m128 X = _mm_set1_ps(x);
@@ -271,6 +271,18 @@ Mat4f orthoProjection(float fov, float aspect, float nearPlane, float farPlane) 
 void viewport(Vec3f &clipVert, float width, float height) {
 	clipVert.x = roundf((clipVert.x + 1.0f) * 0.5f * width);
 	clipVert.y = roundf((1.0f - (clipVert.y + 1.0f)  * 0.5f) * height);
+}
+
+void viewport(Vec3f clipVert[3], float width, float height) {
+	clipVert[0].x = roundf((clipVert[0].x + 1.0f) * 0.5f * width);
+	clipVert[1].x = roundf((clipVert[1].x + 1.0f) * 0.5f * width);
+	clipVert[2].x = roundf((clipVert[2].x + 1.0f) * 0.5f * width);
+	clipVert[0].y = roundf((1.0f - (clipVert[0].y + 1.0f) * 0.5f) * height);
+	clipVert[1].y = roundf((1.0f - (clipVert[1].y + 1.0f) * 0.5f) * height);
+	clipVert[2].y = roundf((1.0f - (clipVert[2].y + 1.0f) * 0.5f) * height);
+	
+	__m256i mask = _mm256_set_epi32(0x8000, 0x8000, 0x8000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000);
+	__m256 vertices = _mm256_maskload_ps(&clipVert[0].x, mask);
 }
 
 Mat4f lookAt(Vec3f from, Vec3f to) {

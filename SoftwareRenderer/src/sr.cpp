@@ -6,8 +6,8 @@
 #include "image.h"
 #include "model.h"
 
-#include "winlayer.h"
 #include "timer.cpp"
+#include "winlayer.h"
 
 #include "renderer.h"
 #include "renderer.cpp"
@@ -58,6 +58,7 @@ int main(int argc, char **argv) {
 	clearImBuffer(black);
 
 	HWND window = Win32CreateWindow(imageWidth, imageHeight, "3D Renderer");
+	layer.window = window;
 	Win32ShowCursor(false);
 	SetCapture(window);
 
@@ -103,6 +104,8 @@ int main(int argc, char **argv) {
 	std::mt19937 eng(rd());
 	std::uniform_int_distribution<> distr(0, posList.size() - 1);
 	
+	int Score = 0;
+
 	float lastFrame = 0.0f;
 	while (globalRunning) {
 		float currentFrame = fpsLock.secondsElapsed();
@@ -119,7 +122,7 @@ int main(int argc, char **argv) {
 			cameraForwardDirection = 0;
 			cameraRightDirection = 0;
 			layer.direction = 0;
-			ProcessInput(window, angleAlpha, angleBeta, angleGamma, cameraForwardDirection, cameraRightDirection, scaleVariable, deltaTime);
+			ProcessInput(window, angleBeta, deltaTime);
 
 			clearZBuffer(camera.farClippingPlane);
 			//clearImBuffer(Color(255 * 0.2f, 255 * 0.1f, 255 * 0.0f));
@@ -185,7 +188,9 @@ int main(int argc, char **argv) {
 
 				for (Asteroid &ast : asteroids) {
 					if (!ast.available) {
+						// Kill an asteroid
 						if (abs(bl.x - ast.x / 5) < 0.2f && abs(bl.y - ast.y / 5) < 0.2f) {
+							Score += 10;
 							ast.available = true;
 						}
 					}
@@ -207,9 +212,12 @@ int main(int argc, char **argv) {
 				Asteroid &ast = asteroids[index];
 				// Move an asteroid
 				if (!ast.available) {
-					if (abs(ast.x / 4 - player.x) < 0.25f && abs(ast.y / 4 - player.y) < 0.25f) {
+					// Player is dead
+					if ((abs(ast.x / 4 - player.x) < 0.25f) && (abs(ast.y / 4 - player.y) < 0.25f)) {
 						player.x = 0;
 						player.y = 0;
+
+						LoseMenu(Score);
 					}
 
 					ast.x += ast.direction.x * deltaTime * 14.0f;
@@ -221,17 +229,17 @@ int main(int argc, char **argv) {
 
 					Mat4f astTransform = translate(ast.x, 0.0f, ast.y) * scale(0.2f);
 
-					flatShader.uniform_M = astTransform;
-					flatShader.uniform_VP = vp;
+					flatShader.uniform_M = &astTransform;
+					flatShader.uniform_VP = &vp;
 					flatShader.uniform_LightPos = render.light.position;
 					// Phong
-					phongShader.uniform_M = astTransform;
-					phongShader.uniform_MTI = transpose(inverse(astTransform));
+					phongShader.uniform_M = &astTransform;
+					phongShader.uniform_MTI = &transpose(inverse(astTransform));
 					phongShader.uniform_ObjColor = { 125.0f, 125.0f, 125.0f };
 					phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
 					phongShader.uniform_ViewPos = camera.position;
 					phongShader.uniform_LightPos = render.light.position;
-					phongShader.uniform_VP = vp;
+					phongShader.uniform_VP = &vp;
 					drawModel(asteroid, phongShader);
 				}
 				else {
@@ -257,21 +265,30 @@ int main(int argc, char **argv) {
 			}
 			
 			// Model shader
-			phongShader.uniform_M = shipTransform;
-			phongShader.uniform_MTI = transpose(inverse(shipTransform));
+			phongShader.uniform_M = &shipTransform;
+			phongShader.uniform_MTI = &transpose(inverse(shipTransform));
 			phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
 			phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
 			phongShader.uniform_ViewPos = camera.position;
 			phongShader.uniform_LightPos = render.light.position;
-			phongShader.uniform_VP = vp;
+			phongShader.uniform_VP = &vp;
 			drawModel(model1, phongShader);
+
+
+			// UI system
+			DrawRectangle(20, 10, layer.heat, 40, Color(0, (1.0f - (float)layer.heat / (float)151) * 255, 255 * (float)layer.heat / (float)151));
+			DrawRectangle(20, 10, 150, 3, white);
+			DrawRectangle(20, 10, 3,  40, white);
+			DrawRectangle(20, 47, 150, 3, white);
+			DrawRectangle(170,10, 3,  40, white);
+
+			DrawScore(render.imagebuffer.width / 2, 20, Score);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
 
 			char buffer[128];
-			sprintf(buffer, "%f ms Draw time: %f\n", deltaTime * 1000, tm.milliElapsed(), layer.yaw,
-					player.front.x, player.front.y, player.front.z);
+			sprintf(buffer, "%f ms Draw time: %f\n", deltaTime * 1000, tm.milliElapsed());
 			OutputDebugStringA(buffer);
 		}
 	}

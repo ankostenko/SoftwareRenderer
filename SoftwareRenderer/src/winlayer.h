@@ -47,6 +47,9 @@ struct Layer {
 	float yaw;
 	int direction;
 	bool shoot;
+	int heat;
+	Timer sinceGameStart;
+	HWND window;
 };
 
 struct Layer layer;
@@ -106,8 +109,9 @@ void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 	StretchDIBits(hdc, 0, 0, width, height, 0, 0, width, height, image, &buffer_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
 }
 
+Timer heatTimer;
 // Alpha - around X axis, Beta - around Y axis, Gamma - around Z axis
-void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angleGamma, int &forwardDirection, int &rightDirection, float &scaleVariable, float deltaTime) {
+void ProcessInput(HWND window, float &angleBeta, float deltaTime) {
 	MSG msg;
 
 	if (GetAsyncKeyState(W_BUTTON)) {
@@ -130,8 +134,18 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 	}
 
 	layer.shoot = false;
+	layer.heat -= 1;
 	if (GetAsyncKeyState(VK_SPACE)) {
-		layer.shoot = true;
+		if (layer.heat < 150) {
+			layer.heat += 2;
+			layer.shoot = true;
+		} else {
+			heatTimer.ResetStartTime();
+		}
+		if (layer.sinceGameStart.secondsElapsed() > 5 && heatTimer.secondsElapsed() < 5) {
+			layer.heat -= 2;
+			layer.shoot = false;
+		}
 	}
 
 	while (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
