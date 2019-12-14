@@ -35,7 +35,7 @@ PhongShader phongShader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
-	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f, 0.0f, -12.0f * 50 }));
+	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f, 4.0f * 50, -12.0f * 50 }));
 
 	Model light;
 	Model model1;
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
 	std::vector<Bullet> bullets;
 	std::vector<Asteroid> asteroids;
-	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({	 true, Vec3f({ 1.0f, 0.0f, 0.0 }), -4 * 5, 0 }));
 	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
 	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
 	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
@@ -213,7 +213,7 @@ int main(int argc, char **argv) {
 				// Move an asteroid
 				if (!ast.available) {
 					// Player is dead
-					if ((abs(ast.x / 4 - player.x) < 0.25f) && (abs(ast.y / 4 - player.y) < 0.25f)) {
+					if ((abs(ast.x / 4 - player.x) < 0.35f) && (abs(ast.y / 4 - player.y) < 0.35f)) {
 						player.x = 0;
 						player.y = 0;
 
@@ -224,6 +224,9 @@ int main(int argc, char **argv) {
 						layer.lockCursor = true;
 						Score = 0;
 						layer.heat = 0;
+						for (Asteroid &ast : asteroids) {
+							ast.available = true;
+						}
 					}
 
 					ast.x += ast.direction.x * deltaTime * 14.0f;
