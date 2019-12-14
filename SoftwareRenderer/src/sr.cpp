@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
 	std::vector<Bullet> bullets;
 	std::vector<Asteroid> asteroids;
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 2 }));
 	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
 	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
 	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
@@ -183,6 +183,14 @@ int main(int argc, char **argv) {
 				bl.y = bl.y + bl.direction.z * deltaTime * 10.0f;
 				Mat4f bulletTransform = translate(bl.x * 50, 0.0f, bl.y * 50) * scale(0.02f) * scaleY(0.3f);
 
+				for (Asteroid &ast : asteroids) {
+					if (!ast.available) {
+						if (abs(bl.x - ast.x / 5) < 0.2f && abs(bl.y - ast.y / 5) < 0.2f) {
+							ast.available = true;
+						}
+					}
+				}
+
 				lightShader.uniform_MVP = bulletTransform * vp;
 				lightShader.uniform_LightColor = { 0.0f, 255.0f, 255.0f };
 				drawModel(bullet, lightShader);
@@ -257,7 +265,7 @@ int main(int argc, char **argv) {
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
 
 			char buffer[128];
-			sprintf(buffer, "%f ms Draw time: %f Yaw: %f Front: %f, %f, %f\n", deltaTime * 1000, tm.milliElapsed(), layer.yaw,
+			sprintf(buffer, "%f ms Draw time: %f\n", deltaTime * 1000, tm.milliElapsed(), layer.yaw,
 					player.front.x, player.front.y, player.front.z);
 			OutputDebugStringA(buffer);
 		}
