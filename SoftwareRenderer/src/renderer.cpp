@@ -321,6 +321,35 @@ void DrawFour(int x, int y, int width, int height, Color color) {
 	DrawRectangle(x + width - M, y, M, height, color);
 }
 
+void DrawYLetter(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, M, height / 2, color);
+	DrawRectangle(x + width - M, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2, width, M, color);
+	DrawRectangle(x + width / 2 - M / 2, y + height / 2, M, height / 2, color);
+}
+
+void DrawPLetter(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, width, M, color);
+	DrawRectangle(x, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2 - M, width, M, color);
+	DrawRectangle(x, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x + width - M, y, M, height / 2 - M, color);
+}
+
+void DrawLLetter(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, M, height, color);
+	DrawRectangle(x, y + height - M, width, M, color);
+}
+
+void DrawALetter(int x, int y, int width, int height, Color color) {
+	DrawRectangle(x, y, width, M, color);
+	DrawRectangle(x, y, M, height / 2, color);
+	DrawRectangle(x, y + height / 2 - M, width, M, color);
+	DrawRectangle(x, y + height / 2 - M, M, height / 2, color);
+	DrawRectangle(x + width - M, y, M, height / 2 - M, color);
+	DrawRectangle(x + width - M, y + height / 2, M, height / 2 - M, color);
+}
+
 const int MARGIN = 10;
 const int WIDTH = 30;
 const int HEIGHT = 40;
@@ -335,19 +364,23 @@ void DrawScore(int x, int y, int score) {
 	int scorecopy = score;
 	int totalWidth = NumberOfDigits * (WIDTH + 2 * MARGIN);
 	
+	if (score == 0) {
+		DrawZero(x, y, WIDTH, HEIGHT, white);
+	}
+
 	for (int i = 0; i < NumberOfDigits; i++) {
 		int r = scorecopy % 10;
 		scorecopy /= 10;
 		switch (r) {
-			case 0: { DrawZero( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
-			case 1: { DrawOne(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
-			case 2: { DrawTwo(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
-			case 3: { DrawThree(x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
-			case 4: { DrawFour( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
-			case 5: { DrawFive( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
-			case 6: { DrawSix(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
-			case 7: { DrawSeven(x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
-			case 8: { DrawEight(x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break; 
+			case 0: { DrawZero( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
+			case 1: { DrawOne(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
+			case 2: { DrawTwo(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
+			case 3: { DrawThree(x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
+			case 4: { DrawFour( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
+			case 5: { DrawFive( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
+			case 6: { DrawSix(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
+			case 7: { DrawSeven(x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
+			case 8: { DrawEight(x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
 			case 9: { DrawNine( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
 		}
 	}

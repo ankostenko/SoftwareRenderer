@@ -217,7 +217,13 @@ int main(int argc, char **argv) {
 						player.x = 0;
 						player.y = 0;
 
+						layer.lockCursor = false;
+						Win32ShowCursor(true);
 						LoseMenu(Score);
+						Win32ShowCursor(false);
+						layer.lockCursor = true;
+						Score = 0;
+						layer.heat = 0;
 					}
 
 					ast.x += ast.direction.x * deltaTime * 14.0f;
@@ -276,11 +282,12 @@ int main(int argc, char **argv) {
 
 
 			// UI system
+			DrawRectangle(20, 10, 150, 40, white);
 			DrawRectangle(20, 10, layer.heat, 40, Color(0, (1.0f - (float)layer.heat / (float)151) * 255, 255 * (float)layer.heat / (float)151));
-			DrawRectangle(20, 10, 150, 3, white);
-			DrawRectangle(20, 10, 3,  40, white);
-			DrawRectangle(20, 47, 150, 3, white);
-			DrawRectangle(170,10, 3,  40, white);
+			DrawRectangle(20, 10, 150, 3, peach);
+			DrawRectangle(20, 10, 3,  40, peach);
+			DrawRectangle(20, 47, 150, 3, peach);
+			DrawRectangle(170,10, 3,  40, peach);
 
 			DrawScore(render.imagebuffer.width / 2, 20, Score);
 

@@ -50,6 +50,8 @@ struct Layer {
 	int heat;
 	Timer sinceGameStart;
 	HWND window;
+	bool lockCursor;
+	bool mLBPressed;
 };
 
 struct Layer layer;
@@ -109,6 +111,13 @@ void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 	StretchDIBits(hdc, 0, 0, width, height, 0, 0, width, height, image, &buffer_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
 }
 
+bool DoesMouseCollide(int rectX, int rectY, int width, int height) {
+	if (mouse.x > rectX && mouse.x < rectX + width && mouse.y > rectY && mouse.y < rectY + height) {
+		return true;
+	}
+	return false;
+}
+
 Timer heatTimer;
 // Alpha - around X axis, Beta - around Y axis, Gamma - around Z axis
 void ProcessInput(HWND window, float &angleBeta, float deltaTime) {
@@ -147,7 +156,8 @@ void ProcessInput(HWND window, float &angleBeta, float deltaTime) {
 			layer.shoot = false;
 		}
 	}
-
+	
+	layer.mLBPressed = false;
 	while (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -158,7 +168,7 @@ void ProcessInput(HWND window, float &angleBeta, float deltaTime) {
 			// So probably I put it away for a while.
 			case WM_LBUTTONDOWN:
 			case WM_LBUTTONUP: {
-
+				layer.mLBPressed = true;
 			} break;
 			case WM_ACTIVATE: {
 				OutputDebugStringA("Activated\n");
@@ -170,7 +180,9 @@ void ProcessInput(HWND window, float &angleBeta, float deltaTime) {
 
 				POINT pt = { buffer_width / 2, buffer_height / 2 };
 				ClientToScreen(window, &pt);
-				SetCursorPos(pt.x, pt.y);
+				if (layer.lockCursor) {
+					SetCursorPos(pt.x, pt.y);
+				}
 			} break;
 			case WM_MOUSEWHEEL: {
 				int scroll = GET_WHEEL_DELTA_WPARAM(msg.wParam);

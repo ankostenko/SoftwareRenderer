@@ -40,6 +40,17 @@ void LoseMenu(int finalScore) {
 			ProcessInput(layer.window, _placeholder, 0);
 			DrawScore(render.imagebuffer.width / 2, render.imagebuffer.height / 2 - 100, finalScore);
 			
+			// Draw "replay" button
+			DrawRectangle(render.imagebuffer.width / 2 - 115, render.imagebuffer.height / 2 + 25, 250, 70, white);
+			DrawPLetter(render.imagebuffer.width / 2 - 100 + 20, render.imagebuffer.height / 2 + 40, 30, 40, black);
+			DrawLLetter(render.imagebuffer.width / 2 -  60 + 20, render.imagebuffer.height / 2 + 40, 30, 40, black);
+			DrawALetter(render.imagebuffer.width / 2 +   0 + 20, render.imagebuffer.height / 2 + 40, 30, 40, black);
+			DrawYLetter(render.imagebuffer.width / 2 +  60 + 20, render.imagebuffer.height / 2 + 40, 30, 40, black);
+
+			if (DoesMouseCollide(render.imagebuffer.width / 2 - 115, render.imagebuffer.height / 2 + 25, 250, 70) && layer.mLBPressed) {
+				break;
+			}
+
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(layer.window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
 		}
