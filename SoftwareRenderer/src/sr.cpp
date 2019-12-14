@@ -85,16 +85,16 @@ int main(int argc, char **argv) {
 
 	std::vector<Bullet> bullets;
 	std::vector<Asteroid> asteroids;
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 2 }));
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
-	asteroids.push_back(Asteroid({ false, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, -4 * 12 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
 
 	std::default_random_engine generator;
 	std::uniform_real_distribution<float> distribution(0, 1);
@@ -207,6 +207,11 @@ int main(int argc, char **argv) {
 				Asteroid &ast = asteroids[index];
 				// Move an asteroid
 				if (!ast.available) {
+					if (abs(ast.x / 4 - player.x) < 0.25f && abs(ast.y / 4 - player.y) < 0.25f) {
+						player.x = 0;
+						player.y = 0;
+					}
+
 					ast.x += ast.direction.x * deltaTime * 14.0f;
 					ast.y += ast.direction.y * deltaTime * 14.0f;
 
