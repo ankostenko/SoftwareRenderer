@@ -175,6 +175,12 @@ Mat4f scaleY(float scaleValue) {
 	return mat;
 }
 
+Mat4f scaleX(float scaleValue) {
+	Mat4f mat = identity();
+	mat.setRow(0, scaleValue, 0, 0, 0);
+	return mat;
+}
+
 Mat4f translate(float x, float y, float z) {
 	Mat4f mat = identity();
 	float values[4] = { x, y, z, 1.0f };
@@ -215,6 +221,10 @@ Mat4f rotate(float alpha, float beta, float gamma) {
 	rotationMatrix.setRow(3,								0,			 0,								   0, 1);
 
 	return rotationMatrix;
+}
+
+float distanceBetweenPoints(Vec3f p0, Vec3f p1) {
+	return sqrt( (p0.x - p1.x) * (p0.x - p1.x) + (p0.y - p1.y) * (p0.y - p1.y) );
 }
 
 template<typename T>

@@ -32,6 +32,7 @@ int imageHeight = 600;
 FlatShader flatShader;
 LightShader lightShader;
 PhongShader phongShader;
+PhongShader asteroidShader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
@@ -42,14 +43,14 @@ int main(int argc, char **argv) {
 	Model bullet;
 	Model asteroid;
 
-	loadModel(model1, "models\\spaceship.obj");
+	loadModel(model1, "..\\SoftwareRenderer\\models\\spaceship.obj");
 	normalizeModelCoords(model1);
-	loadModel(bullet, "models\\sphere.obj");
+	loadModel(bullet, "..\\SoftwareRenderer\\models\\sphere.obj");
 	normalizeModelCoords(bullet);
-	loadModel(asteroid, "models\\asteroid.obj");
+	loadModel(asteroid, "..\\SoftwareRenderer\\models\\asteroid.obj");
 	normalizeModelCoords(asteroid);
 
-	loadModel(light, "models\\sphere.obj");
+	loadModel(light, "SoftwareRenderer\\models\\sphere.obj");
 	//normalizeModelCoords(light);
 
 	// TODO: default texture loading
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
 
 	std::vector<Bullet> bullets;
 	std::vector<Asteroid> asteroids;
-	asteroids.push_back(Asteroid({	 true, Vec3f({ 1.0f, 0.0f, 0.0 }), -4 * 5, 0 }));
+	asteroids.push_back(Asteroid({ true, Vec3f({ 1.0f, 0.0f, 0.0 }), 0, 0 }));
 	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
 	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
 	asteroids.push_back(Asteroid({ true, Vec3f({ 0.0f, 0.0f, 0.0 }), 0, 0 }));
@@ -180,7 +181,7 @@ int main(int argc, char **argv) {
 				}
 				bl.x = bl.x + bl.direction.x * deltaTime * 10.0f;
 				bl.y = bl.y + bl.direction.z * deltaTime * 10.0f;
-				Mat4f bulletTransform = translate(bl.x * 50, 0.0f, bl.y * 50) * scale(0.02f) * scaleY(0.3f);
+				Mat4f bulletTransform = translate(bl.x * 50, 0.0f, bl.y * 50) * scale(0.02f) * scaleY(0.1f);
 
 				for (Asteroid &ast : asteroids) {
 					if (!ast.available) {
@@ -198,10 +199,10 @@ int main(int argc, char **argv) {
 			}
 
 			// Light Movement
-			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.02f);
-			lightShader.uniform_MVP = lightTransform * vp;
-			lightShader.uniform_LightColor = { 255.0f, 255.0f, 255.0f };
-			drawModel(light, lightShader);
+			//Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.02f);
+			//lightShader.uniform_MVP = lightTransform * vp;
+			//lightShader.uniform_LightColor = { 255.0f, 255.0f, 255.0f };
+			//drawModel(light, lightShader);
 
 			// Asteroid's movement
 			for (int index = 0; index < asteroids.size(); index++) {
@@ -209,7 +210,8 @@ int main(int argc, char **argv) {
 				// Move an asteroid
 				if (!ast.available) {
 					// Player is dead
-					if ((abs(ast.x / 4 - player.x) < 0.25f) && (abs(ast.y / 4 - player.y) < 0.25f)) {
+					printf("Asteroid: %f, %f Player: %f, %f\n", ast.x / 4, ast.y / 4, player.x, player.y);
+					if (distanceBetweenPoints(Vec3f({ ast.x / 5, ast.y / 5, 0 }), Vec3f({ player.x, player.y, 0 })) < 0.125f) {
 						player.x = 0;
 						player.y = 0;
 
@@ -238,14 +240,14 @@ int main(int argc, char **argv) {
 					flatShader.uniform_VP = &vp;
 					flatShader.uniform_LightPos = render.light.position;
 					// Phong
-					phongShader.uniform_M = &astTransform;
-					phongShader.uniform_MTI = &transpose(inverse(astTransform));
-					phongShader.uniform_ObjColor = { 125.0f, 125.0f, 125.0f };
-					phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
-					phongShader.uniform_ViewPos = camera.position;
-					phongShader.uniform_LightPos = render.light.position;
-					phongShader.uniform_VP = &vp;
-					drawModel(asteroid, phongShader);
+					asteroidShader.uniform_M = &astTransform;
+					asteroidShader.uniform_MTI = &transpose(inverse(astTransform));
+					asteroidShader.uniform_ObjColor = { 125.0f, 125.0f, 125.0f };
+					asteroidShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
+					asteroidShader.uniform_ViewPos = camera.position;
+					asteroidShader.uniform_LightPos = render.light.position;
+					asteroidShader.uniform_VP = &vp;
+					drawModel(asteroid, asteroidShader);
 				}
 				else {
 					// Generate "new" asteroid
@@ -293,9 +295,9 @@ int main(int argc, char **argv) {
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
 
-			char buffer[128];
-			sprintf(buffer, "%f ms Draw time: %f\n", deltaTime * 1000, tm.milliElapsed());
-			OutputDebugStringA(buffer);
+			//char buffer[128];
+			//sprintf(buffer, "%f ms Draw time: %f\n", deltaTime * 1000, tm.milliElapsed());
+			//OutputDebugStringA(buffer);
 		}
 	}
 

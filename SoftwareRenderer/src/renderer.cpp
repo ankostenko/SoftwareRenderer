@@ -371,7 +371,7 @@ void DrawScore(int x, int y, int score) {
 	for (int i = 0; i < NumberOfDigits; i++) {
 		int r = scorecopy % 10;
 		scorecopy /= 10;
-		switch (r) {
+		switch (r) {	
 			case 0: { DrawZero( x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
 			case 1: { DrawOne(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
 			case 2: { DrawTwo(  x + totalWidth / 4 - i * (MARGIN * 2 + WIDTH), y, WIDTH, HEIGHT, white); } break;
