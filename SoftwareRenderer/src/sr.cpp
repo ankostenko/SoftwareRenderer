@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
 			
 			//drawLine(origin * vp, player.front * vp, magenta);
 
-			// Bullet spawn
+			// Bullet spawn	
 			if (layer.shoot) {
 				Bullet bl;
 				bl.x = player.x;
@@ -210,7 +210,6 @@ int main(int argc, char **argv) {
 				// Move an asteroid
 				if (!ast.available) {
 					// Player is dead
-					printf("Asteroid: %f, %f Player: %f, %f\n", ast.x / 4, ast.y / 4, player.x, player.y);
 					if (distanceBetweenPoints(Vec3f({ ast.x / 5, ast.y / 5, 0 }), Vec3f({ player.x, player.y, 0 })) < 0.125f) {
 						player.x = 0;
 						player.y = 0;
@@ -240,13 +239,13 @@ int main(int argc, char **argv) {
 					flatShader.uniform_VP = &vp;
 					flatShader.uniform_LightPos = render.light.position;
 					// Phong
-					asteroidShader.uniform_M = &astTransform;
-					asteroidShader.uniform_MTI = &transpose(inverse(astTransform));
+					asteroidShader.uniform_M = astTransform;
+					asteroidShader.uniform_MTI = transpose(inverse(astTransform));
 					asteroidShader.uniform_ObjColor = { 125.0f, 125.0f, 125.0f };
 					asteroidShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
 					asteroidShader.uniform_ViewPos = camera.position;
 					asteroidShader.uniform_LightPos = render.light.position;
-					asteroidShader.uniform_VP = &vp;
+					asteroidShader.uniform_VP = vp;
 					drawModel(asteroid, asteroidShader);
 				}
 				else {
@@ -272,13 +271,13 @@ int main(int argc, char **argv) {
 			}
 			
 			// Model shader
-			phongShader.uniform_M = &shipTransform;
-			phongShader.uniform_MTI = &transpose(inverse(shipTransform));
+			phongShader.uniform_M = shipTransform;
+			phongShader.uniform_MTI = transpose(inverse(shipTransform));
 			phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
 			phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
 			phongShader.uniform_ViewPos = camera.position;
 			phongShader.uniform_LightPos = render.light.position;
-			phongShader.uniform_VP = &vp;
+			phongShader.uniform_VP = vp;
 			drawModel(model1, phongShader);
 
 
@@ -291,6 +290,9 @@ int main(int argc, char **argv) {
 			DrawRectangle(170,10, 3,  40, peach);
 
 			DrawScore(render.imagebuffer.width / 2, 20, Score);
+			// Millis
+			DrawScore(40, render.imagebuffer.height - 50, (int)tm.milliElapsed());
+			DrawScore(190, render.imagebuffer.height - 50, deltaTime * 1000);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);

@@ -25,9 +25,9 @@ struct FlatShader : IShader {
 };
 
 struct PhongShader : IShader {
-	Mat4f* uniform_M;
-	Mat4f* uniform_MTI;
-	Mat4f* uniform_VP;
+	Mat4f uniform_MTI;
+	Mat4f uniform_M;
+	Mat4f uniform_VP;
 	Vec3f uniform_ObjColor;
 	Vec3f uniform_LightColor;
 	Vec3f uniform_ViewPos;
@@ -36,9 +36,9 @@ struct PhongShader : IShader {
 	Vec3f fragPos[3];
 	
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, int index) override {
-		Normal[index] = norm(normal * *uniform_MTI);
-		fragPos[index] = norm(vert * *uniform_M);
-		return vert * *uniform_M * *uniform_VP;
+		Normal[index] = norm(normal * uniform_MTI);
+		fragPos[index] = norm(vert * uniform_M);
+		return vert * uniform_M * uniform_VP;
 	}
 
 	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {

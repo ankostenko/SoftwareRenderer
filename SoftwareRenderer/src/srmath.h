@@ -61,11 +61,11 @@ struct Vec3f {
 
 	Vec3f operator*(Mat4f mat) {
 		Vec3f vec = { };
-		
-		vec.x =   x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + mat[3][0];
-		vec.y =   x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + mat[3][1];
-		vec.z =   x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + mat[3][2];
-		float w = x * mat[0][3] + y * mat[1][3] + z * mat[2][3] + mat[3][3];
+
+		vec.x =   (x * mat[0][0] + y * mat[1][0]) + (z * mat[2][0] + 1 * mat[3][0]);
+		vec.y =   (x * mat[0][1] + y * mat[1][1]) + (z * mat[2][1] + 1 * mat[3][1]);
+		vec.z =   (x * mat[0][2] + y * mat[1][2]) + (z * mat[2][2] + 1 * mat[3][2]);
+		float w = (x * mat[0][3] + y * mat[1][3]) + (z * mat[2][3] + 1 * mat[3][3]);
 		
 		if (w != 0) {
 			vec.y /= w;
@@ -79,7 +79,7 @@ struct Vec3f {
 		__m256 drow1 = _mm256_set_m128(Y, X);
 		__m256 matdrow = _mm256_loadu_ps(&mat.mat[0][0]);
 		__m256 result1 = _mm256_mul_ps(drow1, matdrow);
-
+		
 		__m128 One = _mm_set1_ps(1);
 		__m128 Z =   _mm_set1_ps(z);
 		__m256 drow2 = _mm256_set_m128(One, Z);
@@ -91,7 +91,7 @@ struct Vec3f {
 		// Split vector
 		__m128 xy = _mm256_extractf128_ps(intervec, 0);
 		__m128 zw = _mm256_extractf128_ps(intervec, 1);
-
+		
 		__m128 resvec = _mm_add_ps(xy, zw);
 		
 		if (resvec.m128_f32[3] != 0) {
@@ -100,7 +100,7 @@ struct Vec3f {
 		}
 		
 		vec = *(Vec3f*)&resvec.m128_f32;
-		
+
 		return vec;
 	}
 
@@ -203,7 +203,7 @@ Mat4f rotateY(float angle) {
 }
 
 // ZXY order
-Mat4f rotate(float alpha, float beta, float gamma) {
+static Mat4f rotate(float alpha, float beta, float gamma) {
 	Mat4f rotationMatrix;
 
 	float cosA = cos(alpha);
@@ -223,7 +223,7 @@ Mat4f rotate(float alpha, float beta, float gamma) {
 	return rotationMatrix;
 }
 
-float distanceBetweenPoints(Vec3f p0, Vec3f p1) {
+static float distanceBetweenPoints(Vec3f p0, Vec3f p1) {
 	return sqrt( (p0.x - p1.x) * (p0.x - p1.x) + (p0.y - p1.y) * (p0.y - p1.y) );
 }
 
@@ -232,7 +232,7 @@ T cross(T v0, T v1) {
 	return { v0.y * v1.z - v0.z * v1.y, v0.z * v1.x - v0.x * v1.z, v0.x * v1.y - v0.y * v1.x };
 }
 
-Vec3f norm(Vec3f vec) {
+static Vec3f norm(Vec3f vec) {
 	float length = sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 	if (length == 0) {
 		return vec;
@@ -240,7 +240,7 @@ Vec3f norm(Vec3f vec) {
 	return { vec.x / length, vec.y / length, vec.z / length };
 }
 
-Mat4f projection(float fov, float aspect, float nearPlane, float farPlane) {
+static Mat4f projection(float fov, float aspect, float nearPlane, float farPlane) {
 
 	float n = nearPlane;
 	float f = farPlane;
@@ -259,7 +259,7 @@ Mat4f projection(float fov, float aspect, float nearPlane, float farPlane) {
 	return proj;
 }
 
-Mat4f orthoProjection(float fov, float aspect, float nearPlane, float farPlane) {
+static Mat4f orthoProjection(float fov, float aspect, float nearPlane, float farPlane) {
 	float n = nearPlane;
 	float f = farPlane;
 
@@ -278,12 +278,12 @@ Mat4f orthoProjection(float fov, float aspect, float nearPlane, float farPlane) 
 	return proj;
 }
 
-void viewport(Vec3f &clipVert, float width, float height) {
+static void viewport(Vec3f &clipVert, float width, float height) {
 	clipVert.x = roundf((clipVert.x + 1.0f) * 0.5f * width);
 	clipVert.y = roundf((1.0f - (clipVert.y + 1.0f)  * 0.5f) * height);
 }
 
-void viewport(Vec3f clipVert[3], float width, float height) {
+static void viewport(Vec3f clipVert[3], float width, float height) {
 	clipVert[0].x = roundf((clipVert[0].x + 1.0f) * 0.5f * width);
 	clipVert[1].x = roundf((clipVert[1].x + 1.0f) * 0.5f * width);
 	clipVert[2].x = roundf((clipVert[2].x + 1.0f) * 0.5f * width);
@@ -295,7 +295,7 @@ void viewport(Vec3f clipVert[3], float width, float height) {
 	__m256 vertices = _mm256_maskload_ps(&clipVert[0].x, mask);
 }
 
-Mat4f lookAt(Vec3f from, Vec3f to) {
+static Mat4f lookAt(Vec3f from, Vec3f to) {
 	Vec3f forward = norm(from - to);
 	Vec3f right = norm(cross({ 0.0f, 1.0f, 0.0f }, forward));
 	Vec3f up = cross(forward, right);
@@ -320,7 +320,7 @@ Mat4f lookAt(Vec3f from, Vec3f to) {
 	return ret;
 }
 
-Mat4f lookAt(Vec3f eye, Vec3f to, Vec3f up) {
+static Mat4f lookAt(Vec3f eye, Vec3f to, Vec3f up) {
 	Vec3f forward = norm(to - eye);
 	Vec3f right = norm(cross(forward, up));
 
@@ -344,23 +344,23 @@ Mat4f lookAt(Vec3f eye, Vec3f to, Vec3f up) {
 	return ret;
 }
 
-float radians(float degrees) {
+static float radians(float degrees) {
 	return degrees * M_PI / 180;
 }
 
-float degrees(float radians) {
+static float degrees(float radians) {
 	return radians * 180 / M_PI;
 }
 
-float dot(Vec3f v0, Vec3f v1) {
+static float dot(Vec3f v0, Vec3f v1) {
 	return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z;
 }
 
-Vec3f reflect(Vec3f L, Vec3f N) {
+static Vec3f reflect(Vec3f L, Vec3f N) {
 	return (N * dot(L, N) * 2.0f) - L;
 }
 
-int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
+static int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
 	int i, j, k, imax;
 	float maxA, absA;
 
@@ -408,7 +408,7 @@ int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
 	return 1;  //decomposition done 
 }
 
-void LUPInvert(float A[4][4], float IA[4][4], int *P) {
+static void LUPInvert(float A[4][4], float IA[4][4], int *P) {
 	for (int j = 0; j < 4; j++) {
 		for (int i = 0; i < 4; i++) {
 			if (P[i] == j)
@@ -429,7 +429,7 @@ void LUPInvert(float A[4][4], float IA[4][4], int *P) {
 	}
 }
 
-Mat4f inverse(Mat4f mat) {
+static Mat4f inverse(Mat4f mat) {
 	Mat4f inverted = { };
 	int P[32];
 
@@ -439,7 +439,7 @@ Mat4f inverse(Mat4f mat) {
 	return inverted;
 }
 
-Mat4f transpose(Mat4f mat) {
+static Mat4f transpose(Mat4f mat) {
 	Mat4f ret = { };
 
 	for (int i = 0; i < 4; i++) {
@@ -451,7 +451,7 @@ Mat4f transpose(Mat4f mat) {
 	return ret;
 }
 
-float clampMinMax(float min, float max, float value) {
+static float clampMinMax(float min, float max, float value) {
 	if (value > max) {
 		return max;
 	}
@@ -462,14 +462,14 @@ float clampMinMax(float min, float max, float value) {
 	return value;
 }
 
-float clampMin(float min, float value) {
+static float clampMin(float min, float value) {
 	if (value < min) {
 		return min;
 	}
 	return value;
 }
 
-float maxf(float value0, float value1) {
+static float maxf(float value0, float value1) {
 	if (value0 > value1) {
 		return value0;
 	}
