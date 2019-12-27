@@ -143,7 +143,9 @@ void ProcessInput(HWND window, float &angleBeta, float deltaTime) {
 	}
 
 	layer.shoot = false;
-	layer.heat -= 1;
+	if (layer.heat > 0) {
+		layer.heat -= 1;
+	}
 	if (GetAsyncKeyState(VK_SPACE)) {
 		if (layer.heat < 150) {
 			layer.heat += 2;
@@ -152,8 +154,10 @@ void ProcessInput(HWND window, float &angleBeta, float deltaTime) {
 			heatTimer.ResetStartTime();
 		}
 		if (layer.sinceGameStart.secondsElapsed() > 5 && heatTimer.secondsElapsed() < 5) {
-			layer.heat -= 2;
-			layer.shoot = false;
+			if (layer.heat > 0) {
+				layer.heat -= 2;
+				layer.shoot = false;
+			}
 		}
 	}
 	

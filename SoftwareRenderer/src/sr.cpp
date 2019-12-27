@@ -36,7 +36,7 @@ PhongShader asteroidShader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
-	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f, 4.0f * 50, -12.0f * 50 }));
+	initRenderer(imageWidth, imageHeight, Vec3f({ 0.0f, 0.0f, 0.0f }));
 
 	Model light;
 	Model model1;
@@ -50,8 +50,8 @@ int main(int argc, char **argv) {
 	loadModel(asteroid, "..\\SoftwareRenderer\\models\\asteroid.obj");
 	normalizeModelCoords(asteroid);
 
-	loadModel(light, "SoftwareRenderer\\models\\sphere.obj");
-	//normalizeModelCoords(light);
+	loadModel(light, "..\\SoftwareRenderer\\models\\sphere.obj");
+	normalizeModelCoords(light);
 
 	// TODO: default texture loading
 	loadTexture(model, "models\\grid.jpg");
@@ -122,7 +122,6 @@ int main(int argc, char **argv) {
 			ProcessInput(window, angleBeta, deltaTime);
 
 			clearZBuffer(camera.farClippingPlane);
-			//clearImBuffer(Color(255 * 0.2f, 255 * 0.1f, 255 * 0.0f));
 			clearImBuffer(Color(56, 0, 0));
 
 			camera.processMouseScrolling(mouse);
@@ -134,7 +133,7 @@ int main(int argc, char **argv) {
 			camera.lookAt();
 			
 			Mat4f vp = camera.view * camera.project();
-			shipTransform = transpose(rotateY(angleBeta)) * scale(3.0f) * translate(player.x, 0.0f, player.y);
+			shipTransform = rotateY(angleBeta) * scale(3.0f) * translate(player.x, 0.0f, player.y);
 
 			// World Coordinate system
 			//drawLine(origin * vp, X * vp, red);
@@ -142,7 +141,7 @@ int main(int argc, char **argv) {
 			//drawLine(origin * vp, Z * vp, blue);
 
 			// Front vector
-			player.front = norm(Vec3f({ 1.0f, 0.0f, 0.0f }) * transpose(rotateY(angleBeta)));
+			player.front = norm(Vec3f({ 1.0f, 0.0f, 0.0f }) * rotateY(angleBeta));
 			player.x += player.front.x * layer.direction * deltaTime * 3.5f;
 			player.y += player.front.z * layer.direction * deltaTime * 3.5f;
 			
@@ -199,10 +198,10 @@ int main(int argc, char **argv) {
 			}
 
 			// Light Movement
-			//Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.02f);
-			//lightShader.uniform_MVP = lightTransform * vp;
-			//lightShader.uniform_LightColor = { 255.0f, 255.0f, 255.0f };
-			//drawModel(light, lightShader);
+			Mat4f lightTransform = translate(0, 0, 0) * scale(0.2f);
+			lightShader.uniform_MVP = lightTransform * vp;
+			lightShader.uniform_LightColor = { 255.0f, 255.0f, 255.0f };
+			drawModel(light, lightShader);
 
 			// Asteroid's movement
 			for (int index = 0; index < asteroids.size(); index++) {
@@ -210,21 +209,21 @@ int main(int argc, char **argv) {
 				// Move an asteroid
 				if (!ast.available) {
 					// Player is dead
-					if (distanceBetweenPoints(Vec3f({ ast.x / 5, ast.y / 5, 0 }), Vec3f({ player.x, player.y, 0 })) < 0.125f) {
-						player.x = 0;
-						player.y = 0;
-
-						layer.lockCursor = false;
-						Win32ShowCursor(true);
-						LoseMenu(Score);
-						Win32ShowCursor(false);
-						layer.lockCursor = true;
-						Score = 0;
-						layer.heat = 0;
-						for (Asteroid &ast : asteroids) {
-							ast.available = true;
-						}
-					}
+					//if (distanceBetweenPoints(Vec3f({ ast.x / 5, ast.y / 5, 0 }), Vec3f({ player.x, player.y, 0 })) < 0.125f) {
+					//	player.x = 0;
+					//	player.y = 0;
+					//
+					//	layer.lockCursor = false;
+					//	Win32ShowCursor(true);
+					//	LoseMenu(Score);
+					//	Win32ShowCursor(false);
+					//	layer.lockCursor = true;
+					//	Score = 0;
+					//	layer.heat = 0;
+					//	for (Asteroid &ast : asteroids) {
+					//		ast.available = true;
+					//	}
+					//}
 
 					ast.x += ast.direction.x * deltaTime * 14.0f;
 					ast.y += ast.direction.y * deltaTime * 14.0f;
@@ -235,12 +234,13 @@ int main(int argc, char **argv) {
 
 					Mat4f astTransform = translate(ast.x, 0.0f, ast.y) * scale(0.2f);
 
-					flatShader.uniform_M = &astTransform;
-					flatShader.uniform_VP = &vp;
-					flatShader.uniform_LightPos = render.light.position;
+					//flatShader.uniform_M =  astTransform;
+					//flatShader.uniform_MTI = inverse(astTransform);
+					//flatShader.uniform_VP = vp;
+					//flatShader.uniform_LightPos = render.light.position;
 					// Phong
 					asteroidShader.uniform_M = astTransform;
-					asteroidShader.uniform_MTI = transpose(inverse(astTransform));
+					asteroidShader.uniform_MTI = inverse(astTransform);
 					asteroidShader.uniform_ObjColor = { 125.0f, 125.0f, 125.0f };
 					asteroidShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
 					asteroidShader.uniform_ViewPos = camera.position;
@@ -272,7 +272,7 @@ int main(int argc, char **argv) {
 			
 			// Model shader
 			phongShader.uniform_M = shipTransform;
-			phongShader.uniform_MTI = transpose(inverse(shipTransform));
+			phongShader.uniform_MTI = inverse(shipTransform);
 			phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
 			phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
 			phongShader.uniform_ViewPos = camera.position;

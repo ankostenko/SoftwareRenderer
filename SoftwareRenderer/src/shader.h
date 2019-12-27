@@ -7,20 +7,23 @@ struct IShader {
 };
 
 struct FlatShader : IShader {
-	Mat4f* uniform_M;
-	Mat4f* uniform_VP;
+	Mat4f uniform_M;
+	Mat4f uniform_MTI;
+	Mat4f uniform_VP;
 	Vec3f uniform_LightPos;
-	float varIntensity = 0.5f;
+	float varIntensity[3];
 	Vec3f rgb = { 255.0f, 255.0f, 255.0f };
 
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, int index) override {
-		normal = norm(normal * *uniform_M);
-		varIntensity = clampMin(0.0f, normal * norm(uniform_LightPos));
-		return vert * *uniform_M * *uniform_VP;
+		normal = norm(normal * uniform_MTI);
+		Vec3f lightDir = norm(uniform_LightPos - vert);
+		varIntensity[index] = clampMinMax(0.0f, 1.0f, normal * lightDir);
+		return vert * uniform_M * uniform_VP;
 	}
 
 	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {
-		return rgb * varIntensity;
+		float interpVarIntensity = varIntensity[0] * w0 + varIntensity[1] * w1 + varIntensity[2] * w2;
+		return rgb * interpVarIntensity;
 	}
 };
 
@@ -37,18 +40,18 @@ struct PhongShader : IShader {
 	
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, int index) override {
 		Normal[index] = norm(normal * uniform_MTI);
-		fragPos[index] = norm(vert * uniform_M);
+		fragPos[index] = vert * uniform_M;
 		return vert * uniform_M * uniform_VP;
 	}
 
 	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {
 		Vec3f interpNormal = norm(Normal[0] * w0 + Normal[1] * w1 + Normal[2] * w2);
-		Vec3f interpFragPos = norm(fragPos[0] * w0 + fragPos[1] * w1 + fragPos[2] * w2);
+		Vec3f interpFragPos = fragPos[0] * w0 + fragPos[1] * w1 + fragPos[2] * w2;
 		
 		Vec3f lightDir = norm(uniform_LightPos - interpFragPos);
 
 		// Ambient
-		float ambientStrength = 0.4f;
+		float ambientStrength = 0.25f;
 		Vec3f ambient = uniform_LightColor * ambientStrength;
 
 		// Diffuse
