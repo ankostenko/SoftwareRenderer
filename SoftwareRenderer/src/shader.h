@@ -6,14 +6,17 @@ struct IShader {
 };
 
 struct FlatShader : IShader {
+	Mat4f uniform_MTI;
 	Mat4f uniform_M;
 	Mat4f uniform_VP;
+	Vec3f uniform_LightPos;
 	float varIntensity;
 	Vec3f rgb = { 255.0f, 255.0f, 255.0f };
 
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, Vec3f light, int index) override {
-		normal = norm(normal * uniform_M);
-		varIntensity = clampMin(0.0f, normal * norm(light));
+		Vec3f tranNormal = norm(normal * uniform_MTI);
+		Vec3f lightDir = norm(uniform_LightPos - vert);
+		varIntensity = clampMin(0.0f, tranNormal * lightDir);
 		return vert * uniform_M * uniform_VP;
 	}
 
@@ -34,16 +37,15 @@ struct PhongShader : IShader {
 	Vec3f fragPos[3];
 
 	virtual Vec3f vertex(Vec3f vert, Vec3f normal, Vec3f light, int index) override {
-		Vec3f unNormal = normal * uniform_MTI;
-		Normal[index] = norm(unNormal);
-		fragPos[index] = norm(vert * uniform_M);
+		Normal[index] = norm(normal * uniform_MTI);
+		fragPos[index] = vert * uniform_M;
 
 		return vert * uniform_M * uniform_VP;
 	}
 
 	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {
 		Vec3f interpNormal = norm(Normal[0] * w0 + Normal[1] * w1 + Normal[2] * w2);
-		Vec3f interpFragPos = norm(fragPos[0] * w0 + fragPos[1] * w1 + fragPos[2] * w2);
+		Vec3f interpFragPos = fragPos[0] * w0 + fragPos[1] * w1 + fragPos[2] * w2;
 		
 		Vec3f lightDir = norm(uniform_LightPos - interpFragPos);
 
@@ -52,8 +54,9 @@ struct PhongShader : IShader {
 		Vec3f ambient = uniform_LightColor * ambientStrength;
 
 		// Diffuse
-		float diff = clampMin(0.0f, dot(interpNormal, lightDir));
+		float diff = clampMinMax(-0.1f, 1.0f, dot(interpNormal, lightDir));
 		Vec3f diffuse = uniform_LightColor * diff * 0.9f;
+		//printf("DIFFUSE: %f, %f, %f\n", diffuse.x, diffuse.y, diffuse.z);
 
 		// Specular
 		float specularStrength = 0.3f;
@@ -66,6 +69,8 @@ struct PhongShader : IShader {
 		result.x = (diffuse.x + ambient.x + specular.x) * uniform_ObjColor.x;
 		result.y = (diffuse.y + ambient.y + specular.y) * uniform_ObjColor.y;
 		result.z = (diffuse.z + ambient.z + specular.z) * uniform_ObjColor.z;
+
+		//printf("RESULT: %f, %f, %f\n", result.x, result.y, result.z);
 		
 		return result;
 	}

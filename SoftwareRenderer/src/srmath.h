@@ -48,28 +48,23 @@ typedef Matrix<4, 4, float> Mat4f;
 struct Vec3f {
 	union {
 		struct {
-			float x, y, z;
+			float x, y, z, w;
 		};
-		float r[3];
+		float r[4];
 	};
 
 	float operator[](int i) {
+		assert((i < 4) && (i > -1));
 		return r[i];
 	}
 
 	Vec3f operator*(Mat4f mat) {
 		Vec3f vec = { };
 
-		vec.x =   x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + mat[3][0];
-		vec.y =   x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + mat[3][1];
-		vec.z =   x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + mat[3][2];
-		float w = x * mat[0][3] + y * mat[1][3] + z * mat[2][3] + mat[3][3];
-		
-		if (w != 0) {
-			vec.y /= w;
-			vec.z /= w;
-			vec.x /= w;
-		}
+		vec.x = x * mat[0][0] + y * mat[1][0] + z * mat[2][0] + mat[3][0];
+		vec.y = x * mat[0][1] + y * mat[1][1] + z * mat[2][1] + mat[3][1];
+		vec.z = x * mat[0][2] + y * mat[1][2] + z * mat[2][2] + mat[3][2];
+		vec.w = x * mat[0][3] + y * mat[1][3] + z * mat[2][3] + mat[3][3];
 
 		return vec;
 	}
@@ -102,6 +97,12 @@ struct Vec3f {
 
 	Vec3f operator-() {
 		return { -x, -y, -z };
+	}
+
+	void perspectiveDivide() {
+		x /= w;
+		y /= w;
+		z /= w;
 	}
 };
 
@@ -339,7 +340,7 @@ int LUPDecompose(float A[4][4], int N, double Tol, int *P) {
 	return 1;  //decomposition done 
 }
 
-void LUPInvert(float A[4][4], float IA[4][4], int *P) {
+void LUPInvert(float A[4][4], float IA[4][4], int * __restrict P) {
 	for (int j = 0; j < 4; j++) {
 		for (int i = 0; i < 4; i++) {
 			if (P[i] == j)

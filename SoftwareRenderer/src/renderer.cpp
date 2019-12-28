@@ -233,6 +233,7 @@ void drawModel(Model &model, IShader &shader) {
 			triVert[j] = model.triVert(i, j);
 			normals[j] = model.triNorm(i, j);
 			triVert[j] = shader.vertex(triVert[j], normals[j], render.light.position, j);
+			triVert[j].perspectiveDivide();
 			viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
 		}
 		rasterize(triVert, shader);

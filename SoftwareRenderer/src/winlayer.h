@@ -178,15 +178,15 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 					}
 					else if (vkCode == W_BUTTON) {
 						angleAlpha -= M_PI / 2 * deltaTime;
-						if (angleAlpha > 2 * M_PI) {
-							angleAlpha = 0;
-						}
+						//if (angleAlpha < 0) {
+						//	angleAlpha = 2 * M_PI;
+						//}
 					}
 					else if (vkCode == S_BUTTON) {
 						angleAlpha += M_PI / 2 * deltaTime;
-						if (angleAlpha < 0) {
-							angleAlpha = 2 * M_PI;
-						}
+						//if (angleAlpha > 2 * M_PI) {
+						//	angleAlpha = 0;
+						//}
 					}
 					else if (vkCode == J_BUTTON) {
 						rightDirection = -1;

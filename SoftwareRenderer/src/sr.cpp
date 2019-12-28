@@ -40,11 +40,10 @@ int main(int argc, char **argv) {
 
 	Model model;
 	
-	loadModel(model, "models\\sphere.obj");
+	loadModel(model, "models\\teapot.obj");
 	normalizeModelCoords(model);
 
 	loadModel(light, "models\\sphere.obj");
-	normalizeModelCoords(model);
 	normalizeModelCoords(light);
 
 	// TODO: default texture loading
@@ -77,6 +76,8 @@ int main(int argc, char **argv) {
 	PerspectiveCamera cameraP(0.1f, 1000.0f, (float)M_PI / 3);
 	FreeCamera camera(0.1f, 100.0f, 45.0f, Vec3f({ 0.0f, 0.0f, 6.0f }));
 
+	Mat4f IdentityMatrix = identity();
+
 	float lastFrame = 0.0f;
 	while (globalRunning) {
 		float currentFrame = fpsLock.secondsElapsed();
@@ -105,7 +106,7 @@ int main(int argc, char **argv) {
 			camera.lookAt();
 
 			Mat4f vp = camera.view * camera.project();
-			Mat4f modelTransform = translate(0.0f, -4.0f, 0.0) * scale(0.2f);
+			Mat4f modelTransform = IdentityMatrix * translate(0.0f, -15.0f, 0.0f) * rotate(angleAlpha, angleBeta, angleGamma) * scale(0.2f);
 
 			// Light Movement
 			render.light.position.y = 0.0f;
@@ -113,19 +114,26 @@ int main(int argc, char **argv) {
 			render.light.position.z = 1000 * cos(fpsLock.secondsElapsed() / 2) * deltaTime;
 			//render.light.position.x = 7.0f;
 			//render.light.position.z = 7.0f;
+			
 			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.2f);
 			lightShader.uniform_MVP = lightTransform * vp;
 			drawModel(light, lightShader); 
 			
 			// Model shader
 			phongShader.uniform_M = modelTransform;
-			phongShader.uniform_MTI = inverse(modelTransform);
+			phongShader.uniform_MTI = transpose(inverse(modelTransform));
 			phongShader.uniform_VP = vp;
 			phongShader.uniform_ObjColor = { 0.0f, 125.0f, 255.0f };
 			phongShader.uniform_LightColor = { 1.0f, 1.0f, 1.0f };
 			phongShader.uniform_ViewPos = camera.position;
 			phongShader.uniform_LightPos = render.light.position;
 			drawModel(model, phongShader);
+
+			//flatShader.uniform_M = modelTransform;
+			//flatShader.uniform_MTI = transpose(inverse(modelTransform));
+			//flatShader.uniform_VP = vp;
+			//flatShader.uniform_LightPos = render.light.position;
+			//drawModel(model, flatShader);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
