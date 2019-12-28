@@ -129,13 +129,13 @@ void ProcessInput(HWND window, float &angleBeta, float deltaTime) {
 	if (GetAsyncKeyState(S_BUTTON)) {
 		layer.direction = -1;
 	}
-	if (GetAsyncKeyState(A_BUTTON)) {
+	if (GetAsyncKeyState(D_BUTTON)) {
 		angleBeta -= M_PI * deltaTime;
 		if (angleBeta < 0) {
 			angleBeta = 2 * M_PI;
 		}
 	}
-	if (GetAsyncKeyState(D_BUTTON)) {
+	if (GetAsyncKeyState(A_BUTTON)) {
 		angleBeta += M_PI * deltaTime;
 		if (angleBeta > 2 * M_PI) {
 			angleBeta = 0;

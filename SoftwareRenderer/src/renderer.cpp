@@ -228,6 +228,10 @@ void drawModel(Model &model, IShader &shader) {
 		triVert[0] = shader.vertex(triVert[0], normals[0], 0);
 		triVert[1] = shader.vertex(triVert[1], normals[1], 1);
 		triVert[2] = shader.vertex(triVert[2], normals[2], 2);
+
+		triVert[0].perspectiveDivide();
+		triVert[1].perspectiveDivide();
+		triVert[2].perspectiveDivide();
 		
 		viewport(triVert[0], render.imagebuffer.width, render.imagebuffer.height);
 		viewport(triVert[1], render.imagebuffer.width, render.imagebuffer.height);

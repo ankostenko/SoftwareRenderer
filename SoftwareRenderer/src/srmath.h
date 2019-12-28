@@ -50,12 +50,13 @@ typedef Matrix<4, 4, float> Mat4f;
 struct Vec3f {
 	union {
 		struct {
-			float x, y, z;
+			float x, y, z, w;
 		};
-		float r[3];
+		float r[4];
 	};
 
 	float operator[](int i) {
+		assert((i < 4) && (i > -1));
 		return r[i];
 	}
 
@@ -65,13 +66,8 @@ struct Vec3f {
 		vec.x =   (x * mat[0][0] + y * mat[1][0]) + (z * mat[2][0] + 1 * mat[3][0]);
 		vec.y =   (x * mat[0][1] + y * mat[1][1]) + (z * mat[2][1] + 1 * mat[3][1]);
 		vec.z =   (x * mat[0][2] + y * mat[1][2]) + (z * mat[2][2] + 1 * mat[3][2]);
-		float w = (x * mat[0][3] + y * mat[1][3]) + (z * mat[2][3] + 1 * mat[3][3]);
+		vec.w =   (x * mat[0][3] + y * mat[1][3]) + (z * mat[2][3] + 1 * mat[3][3]);
 		
-		if (w != 0) {
-			vec.y /= w;
-			vec.z /= w;
-			vec.x /= w;
-		}
 		return vec;
 
 		__m128 Y = _mm_set1_ps(y);
@@ -132,6 +128,12 @@ struct Vec3f {
 
 	Vec3f operator-() {
 		return { -x, -y, -z };
+	}
+
+	void perspectiveDivide() {
+		x /= w;
+		y /= w;
+		z /= w;
 	}
 };
 
