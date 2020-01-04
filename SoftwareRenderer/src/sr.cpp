@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
 			camera.lookAt();
 
 			Mat4f vp = camera.view * camera.project();
-			Mat4f modelTransform = IdentityMatrix * translate(0.0f, -15.0f, 0.0f) * rotate(angleAlpha, angleBeta, angleGamma) * scale(0.2f);
+			Mat4f modelTransform = rotate(angleAlpha, angleBeta, angleGamma) * translate(0.0f, 0.0f, 0.0f) * scale(0.2f);
 
 			// Light Movement
 			render.light.position.y = 0.0f;
@@ -128,12 +128,6 @@ int main(int argc, char **argv) {
 			phongShader.uniform_ViewPos = camera.position;
 			phongShader.uniform_LightPos = render.light.position;
 			drawModel(model, phongShader);
-
-			//flatShader.uniform_M = modelTransform;
-			//flatShader.uniform_MTI = transpose(inverse(modelTransform));
-			//flatShader.uniform_VP = vp;
-			//flatShader.uniform_LightPos = render.light.position;
-			//drawModel(model, flatShader);
 
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);

@@ -56,7 +56,6 @@ struct PhongShader : IShader {
 		// Diffuse
 		float diff = clampMinMax(-0.1f, 1.0f, dot(interpNormal, lightDir));
 		Vec3f diffuse = uniform_LightColor * diff * 0.9f;
-		//printf("DIFFUSE: %f, %f, %f\n", diffuse.x, diffuse.y, diffuse.z);
 
 		// Specular
 		float specularStrength = 0.3f;
@@ -69,8 +68,6 @@ struct PhongShader : IShader {
 		result.x = (diffuse.x + ambient.x + specular.x) * uniform_ObjColor.x;
 		result.y = (diffuse.y + ambient.y + specular.y) * uniform_ObjColor.y;
 		result.z = (diffuse.z + ambient.z + specular.z) * uniform_ObjColor.z;
-
-		//printf("RESULT: %f, %f, %f\n", result.x, result.y, result.z);
 		
 		return result;
 	}
