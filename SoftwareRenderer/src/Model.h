@@ -27,7 +27,7 @@ struct Model {
 		return normals[faces[iface].normals[nthvert]];
 	}
 
-	int facesNumber() {
+	size_t facesNumber() {
 		return faces.size();
 	}
 };

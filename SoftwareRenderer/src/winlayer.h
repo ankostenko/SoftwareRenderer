@@ -138,7 +138,7 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 				int scroll = GET_WHEEL_DELTA_WPARAM(msg.wParam);
 				float wheelSensitivity = 1.0f;
 
-				mouse.wheelFOV += (float)scroll / fabs(scroll) * wheelSensitivity;
+				mouse.wheelFOV += (float)scroll / float(fabs(scroll)) * wheelSensitivity;
 				if (mouse.wheelFOV >= 45.0f) {
 					mouse.wheelFOV = 45.0f;
 				}
@@ -153,38 +153,38 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 				bool isKeyDown = ((msg.lParam >> 31) == 0);
 				if (isKeyDown) {
 					if (vkCode == D_BUTTON) {
-						angleBeta += M_PI / 8 * deltaTime;
-						if (angleBeta > 2 * M_PI) {
+						angleBeta += FLOAT_PI / 8 * deltaTime;
+						if (angleBeta > 2 * FLOAT_PI) {
 							angleBeta = 0;
 						}
 					}
 					else if (vkCode == A_BUTTON) {
-						angleBeta -= M_PI / 8 * deltaTime;
+						angleBeta -= FLOAT_PI / 8 * deltaTime;
 						if (angleBeta < 0) {
-							angleBeta = 2 * M_PI;
+							angleBeta = 2 * FLOAT_PI;
 						}
 					}
 					else if (vkCode == E_BUTTON) {
-						angleGamma -= M_PI / 8 * deltaTime;
+						angleGamma -= FLOAT_PI / 8 * deltaTime;
 						if (angleGamma < 0) {
-							angleGamma = 2 * M_PI;
+							angleGamma = 2 * FLOAT_PI;
 						}
 					}
 					else if (vkCode == Q_BUTTON) {
-						angleGamma += M_PI / 8 * deltaTime;
-						if (angleGamma > 2 * M_PI) {
+						angleGamma += FLOAT_PI / 8 * deltaTime;
+						if (angleGamma > 2 * FLOAT_PI) {
 							angleGamma = 0;
 						}
 					}
 					else if (vkCode == W_BUTTON) {
-						angleAlpha -= M_PI / 2 * deltaTime;
+						angleAlpha -= FLOAT_PI / 2 * deltaTime;
 						//if (angleAlpha < 0) {
-						//	angleAlpha = 2 * M_PI;
+						//	angleAlpha = 2 * FLOAT_PI;
 						//}
 					}
 					else if (vkCode == S_BUTTON) {
-						angleAlpha += M_PI / 2 * deltaTime;
-						//if (angleAlpha > 2 * M_PI) {
+						angleAlpha += FLOAT_PI / 2 * deltaTime;
+						//if (angleAlpha > 2 * FLOAT_PI) {
 						//	angleAlpha = 0;
 						//}
 					}

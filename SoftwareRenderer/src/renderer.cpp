@@ -25,16 +25,16 @@ void drawLine(Vec3f p1, Vec3f p2, Color &color) {
 		std::swap(p1.z, p2.z);
 	}
 
-	int dx = x2 - x1;
-	int dy = y2 - y1;
+	int dx = int(x2 - x1);
+	int dy = int(y2 - y1);
 	int derror2 = std::abs(dy) * 2;
 	int error2 = 0;
-	int y = y1;
+	int y = int(y1);
 
-	if (x1 < 0) { x1 = 0; }
-	if (x1 > render.imagebuffer.width) { x1 = render.imagebuffer.width; }
-	if (x2 < 0) { x2 = 0; }
-	if (x2 > render.imagebuffer.width) { x2 = render.imagebuffer.width; }
+	if (x1 < 0) { x1 = 0.0f; }
+	if (x1 > render.imagebuffer.width) { x1 = float(render.imagebuffer.width); }
+	if (x2 < 0) { x2 = 0.0f; }
+	if (x2 > render.imagebuffer.width) { x2 = float(render.imagebuffer.width); }
 
 	for (int x = x1; x <= x2; x++) {
 		float t = (x - x1) / (x2 - x1);

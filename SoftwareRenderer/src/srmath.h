@@ -277,11 +277,11 @@ Mat4f lookAt(Vec3f eye, Vec3f to, Vec3f up) {
 }
 
 float radians(float degrees) {
-	return degrees * M_PI / 180;
+	return degrees * FLOAT_PI / 180;
 }
 
 float degrees(float radians) {
-	return radians * 180 / M_PI;
+	return radians * 180 / FLOAT_PI;
 }
 
 float dot(Vec3f v0, Vec3f v1) {

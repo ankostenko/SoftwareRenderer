@@ -28,8 +28,8 @@ public:
 	Color get(float u, float v) {
 		Color color(0, 0, 0);
 
-		int x = roundf(u * width);
-		int y = roundf(v * height);
+		int x = int(roundf(u * width) );
+		int y = int(roundf(v * height));
 
 		if (x < 0 || y < 0 || x >= width || y >= height) {
 			return color;

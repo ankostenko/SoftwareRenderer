@@ -9,6 +9,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#define FLOAT_PI (float)M_PI
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
