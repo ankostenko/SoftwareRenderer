@@ -109,6 +109,19 @@ void Win32DrawToWindow(HWND &window, void *image, int width, int height) {
 // Alpha - around X axis, Beta - around Y axis, Gamma - around Z axis
 void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angleGamma, int &forwardDirection, int &rightDirection, float &scaleVariable, float deltaTime) {
 	MSG msg;
+	
+	if (GetAsyncKeyState(J_BUTTON)) {
+		rightDirection = -1;
+	}
+	else if (GetAsyncKeyState(L_BUTTON)) {
+		rightDirection = 1;
+	}
+	else if (GetAsyncKeyState(I_BUTTON)) {
+		forwardDirection = 1;
+	}
+	else if (GetAsyncKeyState(K_BUTTON)) {
+		forwardDirection = -1;
+	}
 
 	while (PeekMessage(&msg, window, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
@@ -187,18 +200,6 @@ void ProcessInput(HWND window, float &angleAlpha, float &angleBeta, float &angle
 						//if (angleAlpha > 2 * FLOAT_PI) {
 						//	angleAlpha = 0;
 						//}
-					}
-					else if (vkCode == J_BUTTON) {
-						rightDirection = -1;
-					}
-					else if (vkCode == L_BUTTON) {
-						rightDirection = 1;
-					}
-					else if (vkCode == I_BUTTON) {
-						forwardDirection = 1;
-					}
-					else if (vkCode == K_BUTTON) {
-						forwardDirection = -1;
 					}
 					else if (vkCode == VK_ESCAPE) {
 						globalRunning = !globalRunning;
