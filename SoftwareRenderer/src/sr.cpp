@@ -19,14 +19,13 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "../lib/stb_image_write.h"
 
-
 bool globalRunning = true;
 bool globalPause = false;
 
 Model model;
 
-int imageWidth = 800;
-int imageHeight = 600;
+int imageWidth =  800;
+int imageHeight = 800;
 
 FlatShader flatShader;
 LightShader lightShader;
@@ -110,7 +109,7 @@ int main(int argc, char **argv) {
 			Mat4f vp = camera.view * camera.project();
 			Mat4f modelTransform = rotate(angleAlpha, angleBeta, angleGamma) * translate(0.0f, 0.0f, 0.0f) * scale(0.2f);
 
-			// Light Movement
+			// Light Movement 
 			//render.light.position.y = 0.0f;
 			//render.light.position.x = 1000 * sin(fpsLock.secondsElapsed() / 2) * deltaTime;
 			//render.light.position.z = 1000 * cos(fpsLock.secondsElapsed() / 2) * deltaTime;
@@ -119,7 +118,7 @@ int main(int argc, char **argv) {
 			
 			Mat4f lightTransform = translate(render.light.position.x, render.light.position.y, render.light.position.z) * scale(0.2f);
 			lightShader.uniform_MVP = lightTransform * vp;
-			drawModel(light, lightShader); 
+			drawModel(light, lightShader);
 			
 			// Model shader
 			phongShader.uniform_M = modelTransform;
@@ -131,9 +130,13 @@ int main(int argc, char **argv) {
 			phongShader.uniform_LightPos = render.light.position;
 			drawModel(model, phongShader);
 
+#if AA
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
-			
+#else
+			render.imagebuffer.flip_vertically();
+			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
+#endif
 			char buffer[64];
 			sprintf(buffer, "%f ms Draw time: %f\n", deltaTime * 1000, tm.milliElapsed());
 			OutputDebugStringA(buffer);

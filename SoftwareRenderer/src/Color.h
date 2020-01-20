@@ -6,9 +6,11 @@ struct Color {
 			unsigned char r, g, b, a;
 		};
 		unsigned char rgba[4];
+		int rgba_v;
 	};
 
 	Color(unsigned char r, unsigned char g, unsigned char b, unsigned char a = 255) : r(r), g(g), b(b), a(a) {}
+	Color(int rgba) : rgba_v(rgba) {};
 
 	void swapRBChannels() {
 		unsigned char temp = r;

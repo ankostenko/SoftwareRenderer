@@ -6,6 +6,12 @@ struct LightSource {
 	float intensity;
 };
 
+struct AntiAliasingBuffers {
+	Image imagebuffer;
+	float* zbuffer;
+	int aaCoeff;
+};
+
 struct RendererState {
 	Image imagebuffer;
 	// TODO: Get rid of vector
@@ -13,6 +19,7 @@ struct RendererState {
 	int numberOfModels;
 	float *zbuffer;
 	LightSource light;
+	AntiAliasingBuffers aaBuffers;
 };
 
 RendererState render;

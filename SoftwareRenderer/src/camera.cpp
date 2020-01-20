@@ -54,7 +54,11 @@ struct FreeCamera {
 	}
 
 	Mat4f project() {
+#if AA
+		proj = projection(radians(fov), render.aaBuffers.imagebuffer.width * (render.aaBuffers.aaCoeff / 2) / float(render.aaBuffers.imagebuffer.height * (render.aaBuffers.aaCoeff / 2)), nearClippingPlane, farClippingPlane);
+#else
 		proj = projection(radians(fov), render.imagebuffer.width / (float)render.imagebuffer.height, nearClippingPlane, farClippingPlane);
+#endif
 		return proj;
 	}
 	

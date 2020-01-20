@@ -10,11 +10,12 @@ public:
 	unsigned char *data;
 	int width, height;
 	int bytepp;
+	int aaCoeff;
 
 	Image() { }
 
-	Image(int width, int height, BytePerPixel bytepp = RGB) : width(width), height(height), bytepp(bytepp) {
-		data = new unsigned char[bytepp * width * height];
+	Image(int width, int height, int aaCoeff, BytePerPixel bytepp = RGB) : width(width), height(height), aaCoeff(aaCoeff), bytepp(bytepp) {
+		data = new unsigned char[bytepp * aaCoeff * width * height];
 	}
 
 	void set(int x, int y, Color color) {
@@ -23,6 +24,14 @@ public:
 		}
 
 		memmove(&data[(x + y * width) * bytepp], color.rgba, bytepp);
+	}
+
+	void set(int pxIdx, Color color) {
+		if (pxIdx < 0 || pxIdx >= width * height * aaCoeff) {
+			return;
+		}
+
+		memmove(&data[pxIdx * bytepp], color.rgba, bytepp);
 	}
 
 	Color get(float u, float v) {
@@ -37,6 +46,13 @@ public:
 
 		memmove(color.rgba, &data[(x + y * width) * bytepp], bytepp);
 		
+		return color;
+	}
+
+	Color get(int pxIdx) {
+		Color color(0, 0, 0);
+
+		memmove(color.rgba, &data[pxIdx * bytepp], bytepp);
 		return color;
 	}
 

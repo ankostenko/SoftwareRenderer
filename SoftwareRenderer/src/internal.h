@@ -16,6 +16,8 @@
 #include <fstream>
 #include <string>
 #include <thread>
+#include <assert.h>
+#include <inttypes.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../lib/stb_image.h"

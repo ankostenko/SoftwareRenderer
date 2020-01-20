@@ -68,7 +68,8 @@ float edgeFunction(const Vec3f &a, const Vec3f &b, const Vec3f &c) {
 }
 
 #define DEBUG_HAS_TEXTURE 0
-void rasterize(Vec3f *triVert, IShader &shader) {
+#define AA 1
+void rasterize(Vec3f* triVert, IShader& shader) {
 	// z-cullling
 	if (triVert[0].z < -1.0f || triVert[0].z > 1.0f) { return; }
 	if (triVert[1].z < -1.0f || triVert[1].z > 1.0f) { return; }
@@ -107,6 +108,7 @@ void rasterize(Vec3f *triVert, IShader &shader) {
 
 	int width = render.imagebuffer.width;
 	int height = render.imagebuffer.height;
+
 	if ((triVert[0].x > width || triVert[0].x < 0 || triVert[0].y > height || triVert[0].y < 0) &&
 		(triVert[1].x > width || triVert[1].x < 0 || triVert[1].y > height || triVert[1].y < 0) &&
 		(triVert[2].x > width || triVert[2].x < 0 || triVert[2].y > height || triVert[2].y < 0)) {
@@ -117,7 +119,54 @@ void rasterize(Vec3f *triVert, IShader &shader) {
 	if (area <= 0) {
 		return;
 	}
+#if AA
+	static const Vec3f offsets[] = {
+		Vec3f({-0.125f, -0.375f, 0.0f}),
+		Vec3f({ 0.375f, -0.125f, 0.0f}),
+		Vec3f({-0.375f,  0.125f, 0.0f}),
+		Vec3f({ 0.125f,  0.375f, 0.0f}),
+	};
 
+	int pxIndex = 0;
+	for (int y = minY; y <= maxY; y++) {
+		for (int x = minX; x <= maxX; x++) {
+			pxIndex = x + y * render.imagebuffer.width;
+			pxIndex *= 4;
+			for (int aaIndex = 0; aaIndex < render.aaBuffers.aaCoeff; aaIndex++, pxIndex++) {
+				Vec3f p = { x + offsets[aaIndex].x, y + offsets[aaIndex].y, 0 };
+
+				float w0 = edgeFunction(triVert[1], triVert[2], p);
+				float w1 = edgeFunction(triVert[2], triVert[0], p);
+				float w2 = edgeFunction(triVert[0], triVert[1], p);
+
+				if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+					// Barycentric coordinates
+					w0 /= area;
+					w1 /= area;
+					w2 /= area;
+
+					float z = 1 / (triVert[0].z * w0 + triVert[1].z * w1 + triVert[2].z * w2);
+
+					// Clipping
+					if (p.x >= render.imagebuffer.width || p.x < 0 || p.y >= render.imagebuffer.height || p.y < 0) {
+						continue;
+					}
+
+					int sizeMultiplier = (render.aaBuffers.aaCoeff / 2);
+					//if (z < render.aaBuffers.zbuffer[int(p.x) + int(p.y) * render.aaBuffers.imagebuffer.width]) {
+						render.aaBuffers.zbuffer[int(p.x) + int(p.y) * render.aaBuffers.imagebuffer.width] = z;
+						Vec3f resColor = shader.fragment(w0, w1, w2, z);
+						resColor.x = clampMinMax(0, 255, resColor.x);
+						resColor.y = clampMinMax(0, 255, resColor.y);
+						resColor.z = clampMinMax(0, 255, resColor.z);
+						Color color(resColor.x, resColor.y, resColor.z);
+						render.aaBuffers.imagebuffer.set(pxIndex, color);
+					//}
+				}
+			}
+		}
+	}
+#else
 	for (int y = minY; y <= maxY; y++) {
 		for (int x = minX; x <= maxX; x++) {
 			Vec3f p = { x, y, 0 };
@@ -170,10 +219,10 @@ void rasterize(Vec3f *triVert, IShader &shader) {
 #endif
 					render.imagebuffer.set(x, y, color);
 				}
-
 			}
 		}
 	}
+#endif
 }
 
 void clearImBuffer(Color color) {
@@ -186,6 +235,17 @@ void clearImBuffer(Color color) {
 	for (int y = 0; y < render.imagebuffer.height; y++) {
 		memmove(&render.imagebuffer.data[y * size], row, size);
 	}
+
+	size = size * render.aaBuffers.aaCoeff / 2;
+	static unsigned char* aaRow = new unsigned char[size];
+	int sizeMultiplier = render.aaBuffers.aaCoeff / 2;
+	for (int i = 0; i < render.aaBuffers.imagebuffer.width * sizeMultiplier; i++) {
+		memmove(&aaRow[i * render.aaBuffers.imagebuffer.bytepp], color.rgba, render.aaBuffers.imagebuffer.bytepp);
+	}
+
+	for (int y = 0; y < render.imagebuffer.height * sizeMultiplier; y++) {
+		memmove(&render.aaBuffers.imagebuffer.data[y * size], aaRow, size);
+	}
 }
 
 void clearZBuffer(float farClippingPlane) {
@@ -193,37 +253,31 @@ void clearZBuffer(float farClippingPlane) {
 	for (int i = 0; i < size; i++) {
 		render.zbuffer[i] = farClippingPlane;
 	}
+
+	size *= render.aaBuffers.aaCoeff;
+	
+	for (int i = 0; i < size; i++) {
+		render.aaBuffers.zbuffer[i] = farClippingPlane;
+	}
+
 }
 
 void initRenderer(int width, int height, Vec3f lightDir) {
-	render.imagebuffer = Image(width, height);
+	render.imagebuffer = Image(width, height, 1);
 	render.numberOfModels = 0;
 	render.zbuffer = new float[width * height];
+
+	render.aaBuffers.aaCoeff = 4;
+	render.aaBuffers.zbuffer = new float[width * height * render.aaBuffers.aaCoeff];
+	render.aaBuffers.imagebuffer = Image(width, height, render.aaBuffers.aaCoeff);
+	memset(render.aaBuffers.imagebuffer.data, 0, render.aaBuffers.imagebuffer.size() * render.aaBuffers.aaCoeff);
 
 	render.light.position = norm(lightDir);
 	render.light.intensity = 3.5f;
 	render.light.color = white;
 }
 
-void drawModel(Model &model, Mat4f &modelTransform, Mat4f &view, Mat4f &projection) {
-	Mat4f combinedTransform = modelTransform * view * projection;
-	
-	for (int i = 0; i < model.facesNumber(); i++) {
-		Vec3f triVert[3];
-		Vec3f textureUV[3];
-		Vec3f normals[3];
-
-		for (int j = 0; j < 3; j++) {
-			triVert[j] = model.triVert(i, j) * combinedTransform;
-			textureUV[j] = model.triUV(i, j);
-			normals[j] = norm(model.triNorm(i, j) * inverse(transpose(modelTransform)));
-			viewport(triVert[j], render.imagebuffer.width, render.imagebuffer.height);
-		}
-		//rasterize(triVert, normals, render.models[0]->texture, textureUV);
-	}
-}
-
-void drawModel(Model &model, IShader &shader) {
+void drawModel(Model& model, IShader& shader) {
 	for (int i = 0; i < model.facesNumber(); i++) {
 		Vec3f triVert[3];
 		Vec3f textureUV[3];
@@ -238,4 +292,17 @@ void drawModel(Model &model, IShader &shader) {
 		}
 		rasterize(triVert, shader);
 	}
+	
+#if AA
+	int size = render.aaBuffers.imagebuffer.width * render.aaBuffers.imagebuffer.height;
+	for (int y = 0, iy = 0; y < size * render.aaBuffers.aaCoeff; y += 4, iy += 1) {
+		Color t0 = render.aaBuffers.imagebuffer.get(y + 0);
+		Color t1 = render.aaBuffers.imagebuffer.get(y + 1);
+		Color t2 = render.aaBuffers.imagebuffer.get(y + 2);
+		Color t3 = render.aaBuffers.imagebuffer.get(y + 3);
+	
+		Color avg((t0.r + t1.r + t2.r + t3.r) / 4, (t0.g + t1.g + t2.g + t3.g) / 4, (t0.b + t1.b + t2.b + t3.b) / 4);
+		render.imagebuffer.set(iy, avg);
+	}
+#endif
 }
