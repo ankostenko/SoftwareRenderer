@@ -30,7 +30,7 @@ public:
 		if (pxIdx < 0 || pxIdx >= width * height * aaCoeff) {
 			return;
 		}
-
+		
 		memmove(&data[pxIdx * bytepp], color.rgba, bytepp);
 	}
 

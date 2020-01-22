@@ -30,6 +30,7 @@ int imageHeight = 800;
 FlatShader flatShader;
 LightShader lightShader;
 PhongShader phongShader;
+FullDiffuseShader diffuseShader;
 
 int main(int argc, char **argv) {
 	mouse = { imageWidth / 2, imageHeight / 2 };
@@ -110,9 +111,6 @@ int main(int argc, char **argv) {
 			Mat4f modelTransform = rotate(angleAlpha, angleBeta, angleGamma) * translate(0.0f, 0.0f, 0.0f) * scale(0.2f);
 
 			// Light Movement 
-			//render.light.position.y = 0.0f;
-			//render.light.position.x = 1000 * sin(fpsLock.secondsElapsed() / 2) * deltaTime;
-			//render.light.position.z = 1000 * cos(fpsLock.secondsElapsed() / 2) * deltaTime;
 			render.light.position.x = 7.0f;
 			render.light.position.z = 7.0f;
 			
@@ -129,14 +127,14 @@ int main(int argc, char **argv) {
 			phongShader.uniform_ViewPos = camera.position;
 			phongShader.uniform_LightPos = render.light.position;
 			drawModel(model, phongShader);
+			//diffuseShader.uniform_MVP = modelTransform * vp;
+			//drawModel(model, diffuseShader);
 
-#if AA
+			resolveAA();
+
 			render.imagebuffer.flip_vertically();
 			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
-#else
-			render.imagebuffer.flip_vertically();
-			Win32DrawToWindow(window, render.imagebuffer.data, render.imagebuffer.width, render.imagebuffer.height);
-#endif
+		
 			char buffer[64];
 			sprintf(buffer, "%f ms Draw time: %f\n", deltaTime * 1000, tm.milliElapsed());
 			OutputDebugStringA(buffer);

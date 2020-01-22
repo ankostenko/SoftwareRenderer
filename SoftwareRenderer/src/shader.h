@@ -83,3 +83,15 @@ struct LightShader : IShader {
 		return { 255.0f, 255.0f, 255.0f };
 	}
 };
+
+struct FullDiffuseShader : IShader {
+	Mat4f uniform_MVP;
+
+	virtual Vec3f vertex(Vec3f vert, Vec3f normal, Vec3f light, int index) override {
+		return vert * uniform_MVP;
+	}
+
+	virtual Vec3f fragment(float w0, float w1, float w2, float z) override {
+		return { 0.0, 255.0f, 0.0 };
+	}
+};
